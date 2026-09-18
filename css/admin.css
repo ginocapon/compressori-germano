@@ -48,9 +48,81 @@ html {
 body {
   font-family: var(--font-body);
   color: var(--grigio-700);
-  background: var(--grigio-50);
+  background:
+    radial-gradient(1100px 520px at 8% -12%, rgba(44, 95, 138, 0.22), transparent 58%),
+    radial-gradient(900px 480px at 100% 0, rgba(232, 97, 26, 0.11), transparent 52%),
+    #e8eef3;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+body::before,
+body::after {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+}
+
+body::before {
+  z-index: 20;
+  background:
+    linear-gradient(rgba(11, 29, 50, 0.05), transparent 38%),
+    radial-gradient(80% 60% at 50% 100%, rgba(232, 97, 26, 0.06), transparent 62%);
+}
+
+body::after {
+  z-index: 21;
+  opacity: 0.34;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 220 220' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.28' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 280px 280px;
+}
+
+.brand-watermark {
+  z-index: 0;
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.brand-watermark-item {
+  color: var(--blu-scuro);
+  opacity: 0.15;
+  width: min(82vw, 760px);
+  position: absolute;
+}
+
+.brand-watermark-item svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.brand-watermark-a { top: 6%; left: -20%; }
+
+.brand-watermark-b {
+  opacity: 0.12;
+  width: min(70vw, 620px);
+  top: 38%;
+  right: -24%;
+  left: auto;
+  transform: rotate(-14deg);
+}
+
+.brand-watermark-word {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: clamp(6rem, 22vw, 18rem);
+  letter-spacing: 0.06em;
+  line-height: 0.8;
+  opacity: 0.07;
+  width: auto;
+  bottom: -4%;
+  left: 4%;
+  transform: rotate(8deg);
+  color: var(--blu-scuro);
 }
 
 a {
@@ -232,10 +304,12 @@ p { margin-bottom: 1rem; }
 
 /* === ADMIN MAIN === */
 .admin-main {
+  position: relative;
+  z-index: 1;
   margin-left: 260px;
   padding: 32px;
   min-height: 100vh;
-  background: var(--grigio-50);
+  background: rgba(11, 29, 50, 0.03);
 }
 
 .admin-topbar {
@@ -320,6 +394,8 @@ p { margin-bottom: 1rem; }
 
 /* Login */
 .admin-login {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -677,7 +753,13 @@ p { margin-bottom: 1rem; }
 
 /* ============ RESPONSIVE ============ */
 
-@media (max-width: 1024px) {
+.mag-pager {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+}
   .admin-form-grid {
     grid-template-columns: 1fr;
   }

@@ -1,32 +1,59 @@
 /* ============================================
-   CRONO COMPRESSOR — Admin Panel Logic
+   CRONO SERVICE — Admin Panel Logic
    localStorage persistence for all CRUD data
    ============================================ */
 
+(function injectCronoWatermark() {
+  if (document.querySelector('.brand-watermark')) return;
+  var mark =
+    '<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path d="M22 68c-8-3-14-3-22-1" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
+      '<path d="M18 100H0" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
+      '<path d="M22 132c-8 3-14 5-22 5" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
+      '<rect x="86" y="10" width="28" height="20" rx="4" stroke="currentColor" stroke-width="7"/>' +
+      '<path d="M74 30h52" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
+      '<circle cx="100" cy="114" r="66" stroke="currentColor" stroke-width="8"/>' +
+      '<circle cx="100" cy="114" r="50" stroke="currentColor" stroke-width="2.4" opacity="0.45"/>' +
+      '<path d="M100 56v12M100 160v12M42 114h12M146 114h12" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>' +
+      '<path d="M100 114l30-24" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>' +
+      '<path d="M100 114l-6 34" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>' +
+      '<circle cx="100" cy="114" r="8" fill="currentColor"/>' +
+    '</svg>';
+  var wrap = document.createElement('div');
+  wrap.className = 'brand-watermark';
+  wrap.setAttribute('aria-hidden', 'true');
+  wrap.innerHTML =
+    '<div class="brand-watermark-item brand-watermark-a">' + mark + '</div>' +
+    '<div class="brand-watermark-item brand-watermark-b">' + mark + '</div>' +
+    '<div class="brand-watermark-item brand-watermark-word">CRONO</div>';
+  document.body.insertBefore(wrap, document.body.firstChild);
+})();
+
+
 // ============ DATA STORE ============
 const DEFAULT_PRODOTTI = [
-  { id: 1, nome: 'Serie GA — Compressori a Vite', categoria: 'Lubrificati', prezzo: 'Da 8.500', stato: 'Attivo', descrizione: 'Compressori rotativi a vite lubrificati ad alta efficienza per applicazioni industriali.', specifiche: 'Potenza: 5-500 kW | Portata: 8-1200 l/s | Pressione: 7-13 bar', immagine: '', sku: 'GA-VITE-001', data: '2026-01-10' },
-  { id: 2, nome: 'Serie GA VSD+ — Velocita Variabile', categoria: 'Lubrificati', prezzo: 'Da 12.000', stato: 'Attivo', descrizione: 'Compressori a velocita variabile con risparmio energetico fino al 50%.', specifiche: 'Potenza: 7-315 kW | Risparmio: fino al 50% | Classe IE5', immagine: '', sku: 'GA-VSD-001', data: '2026-01-15' },
-  { id: 3, nome: 'Serie ZR/ZT — Oil-Free', categoria: 'Oil-Free', prezzo: 'Da 18.000', stato: 'Attivo', descrizione: 'Aria compressa 100% pura, certificata Classe 0 ISO 8573-1.', specifiche: 'Potenza: 15-500 kW | Classe 0 | Ideale: alimentare, farmaceutico', immagine: '', sku: 'ZR-OF-001', data: '2026-01-20' },
-  { id: 4, nome: 'Essiccatori FD/FX', categoria: 'Trattamento Aria', prezzo: 'Da 3.200', stato: 'Attivo', descrizione: 'Essiccatori a refrigerazione e ad adsorbimento per trattamento aria compressa.', specifiche: 'Portata: 6-6500 l/s | Punto di rugiada: +3°C / -40°C / -70°C', immagine: '', sku: 'FD-ESS-001', data: '2026-02-01' },
-  { id: 5, nome: 'Gruppi Elettrogeni QAS/QES', categoria: 'Generatori', prezzo: 'Su richiesta', stato: 'Attivo', descrizione: 'Gruppi elettrogeni silenziati per cantieri, eventi e backup industriale.', specifiche: 'Potenza: 20-1000 kVA | Diesel | Livello sonoro: 65-75 dB(A)', immagine: '', sku: 'QAS-GEN-001', data: '2026-02-05' },
-  { id: 6, nome: 'Generatori Azoto NGP', categoria: 'Generatori', prezzo: 'Su richiesta', stato: 'Attivo', descrizione: 'Generazione azoto on-site con tecnologia PSA, elimina le bombole.', specifiche: 'Purezza: 95-99.999% | Portata: 2-5000 Nm3/h', immagine: '', sku: 'NGP-N2-001', data: '2026-02-10' },
-  { id: 7, nome: 'Tubazioni AIRnet', categoria: 'Accessori', prezzo: 'Da 45/metro', stato: 'Attivo', descrizione: 'Sistema di tubazioni in alluminio per distribuzione aria compressa.', specifiche: 'Diametro: 20-160mm | Pressione max: 13 bar | Garanzia 10 anni', immagine: '', sku: 'AIR-TUB-001', data: '2026-02-15' },
-  { id: 8, nome: 'Filtri DD/PD/QD', categoria: 'Trattamento Aria', prezzo: 'Da 180', stato: 'Attivo', descrizione: 'Filtri aria compressa per rimozione olio, polveri e odori.', specifiche: 'Efficienza: 99.9999% | Portata: fino a 3600 l/s', immagine: '', sku: 'FIL-DD-001', data: '2026-02-18' },
-  { id: 9, nome: 'Compressori Portatili XAS', categoria: 'Accessori', prezzo: 'Da 6.500', stato: 'Attivo', descrizione: 'Compressori portatili diesel per cantieri e applicazioni mobili.', specifiche: 'Portata: 2-30 m3/min | Diesel | Rimorchiabili', immagine: '', sku: 'XAS-PORT-001', data: '2026-02-20' },
-  { id: 10, nome: 'Serie SF — Scroll Oil-Free', categoria: 'Oil-Free', prezzo: 'Da 4.800', stato: 'Attivo', descrizione: 'Compressori scroll oil-free per laboratori, odontoiatria e piccole produzioni.', specifiche: 'Potenza: 1.5-22 kW | Silenzioso: 62 dB(A) | Classe 0', immagine: '', sku: 'SF-SCR-001', data: '2026-02-25' },
-  { id: 11, nome: 'Ricevitori Aria / Serbatoi', categoria: 'Accessori', prezzo: 'Da 350', stato: 'Attivo', descrizione: 'Serbatoi aria compressa verniciati e zincati, omologati PED.', specifiche: 'Capacita: 50-10000 litri | Pressione: 11-16 bar | PED/CE', immagine: '', sku: 'SERB-001', data: '2026-03-01' },
-  { id: 12, nome: 'Recuperatori Calore ER', categoria: 'Accessori', prezzo: 'Da 2.800', stato: 'Attivo', descrizione: 'Recupero calore dal compressore per riscaldamento acqua e ambienti.', specifiche: 'Recupero: fino al 94% | Acqua calda: fino a 90°C', immagine: '', sku: 'ER-REC-001', data: '2026-03-05' },
+  { id: 1, nome: 'Serie CS — Compressori a Vite', categoria: 'Lubrificati', prezzo: 'Da 8.500', stato: 'Attivo', descrizione: 'Compressori rotativi a vite lubrificati ad alta efficienza per applicazioni industriali.', specifiche: 'Potenza: 5-500 kW | Portata: 8-1200 l/s | Pressione: 7-13 bar', immagine: '', sku: 'CS-VITE-001', data: '2026-01-10' },
+  { id: 2, nome: 'Serie CS VSD — Velocita Variabile', categoria: 'Lubrificati', prezzo: 'Da 12.000', stato: 'Attivo', descrizione: 'Compressori a velocita variabile con risparmio energetico fino al 50%.', specifiche: 'Potenza: 7-315 kW | Risparmio: fino al 50% | Classe IE5', immagine: '', sku: 'CS-VSD-001', data: '2026-01-15' },
+  { id: 3, nome: 'Serie CS-OF — Oil-Free', categoria: 'Oil-Free', prezzo: 'Da 18.000', stato: 'Attivo', descrizione: 'Aria compressa 100% pura, certificata Classe 0 ISO 8573-1.', specifiche: 'Potenza: 15-500 kW | Classe 0 | Ideale: alimentare, farmaceutico', immagine: '', sku: 'CS-OF-001', data: '2026-01-20' },
+  { id: 4, nome: 'Essiccatori CS-FD', categoria: 'Trattamento Aria', prezzo: 'Da 3.200', stato: 'Attivo', descrizione: 'Essiccatori a refrigerazione e ad adsorbimento per trattamento aria compressa.', specifiche: 'Portata: 6-6500 l/s | Punto di rugiada: +3°C / -40°C / -70°C', immagine: '', sku: 'CS-ESS-001', data: '2026-02-01' },
+  { id: 5, nome: 'Gruppi Elettrogeni CS-G', categoria: 'Generatori', prezzo: 'Su richiesta', stato: 'Attivo', descrizione: 'Gruppi elettrogeni silenziati per cantieri, eventi e backup industriale.', specifiche: 'Potenza: 20-1000 kVA | Diesel | Livello sonoro: 65-75 dB(A)', immagine: '', sku: 'CS-GEN-001', data: '2026-02-05' },
+  { id: 6, nome: 'Generatori Azoto CS-N2', categoria: 'Generatori', prezzo: 'Su richiesta', stato: 'Attivo', descrizione: 'Generazione azoto on-site con tecnologia PSA, elimina le bombole.', specifiche: 'Purezza: 95-99.999% | Portata: 2-5000 Nm3/h', immagine: '', sku: 'CS-N2-001', data: '2026-02-10' },
+  { id: 7, nome: 'Tubazioni Crono Pipe', categoria: 'Accessori', prezzo: 'Da 45/metro', stato: 'Attivo', descrizione: 'Sistema di tubazioni in alluminio per distribuzione aria compressa.', specifiche: 'Diametro: 20-160mm | Pressione max: 13 bar | Garanzia 10 anni', immagine: '', sku: 'CS-TUB-001', data: '2026-02-15' },
+  { id: 8, nome: 'Filtri CS-F', categoria: 'Trattamento Aria', prezzo: 'Da 180', stato: 'Attivo', descrizione: 'Filtri aria compressa per rimozione olio, polveri e odori.', specifiche: 'Efficienza: 99.9999% | Portata: fino a 3600 l/s', immagine: '', sku: 'CS-FIL-001', data: '2026-02-18' },
+  { id: 9, nome: 'Compressori Portatili CS-M', categoria: 'Accessori', prezzo: 'Da 6.500', stato: 'Attivo', descrizione: 'Compressori portatili diesel per cantieri e applicazioni mobili.', specifiche: 'Portata: 2-30 m3/min | Diesel | Rimorchiabili', immagine: '', sku: 'CS-PORT-001', data: '2026-02-20' },
+  { id: 10, nome: 'Serie CS-SC — Scroll Oil-Free', categoria: 'Oil-Free', prezzo: 'Da 4.800', stato: 'Attivo', descrizione: 'Compressori scroll oil-free per laboratori, odontoiatria e piccole produzioni.', specifiche: 'Potenza: 1.5-22 kW | Silenzioso: 62 dB(A) | Classe 0', immagine: '', sku: 'CS-SCR-001', data: '2026-02-25' },
+  { id: 11, nome: 'Ricevitori Aria / Serbatoi', categoria: 'Accessori', prezzo: 'Da 350', stato: 'Attivo', descrizione: 'Serbatoi aria compressa verniciati e zincati, omologati PED.', specifiche: 'Capacita: 50-10000 litri | Pressione: 11-16 bar | PED/CE', immagine: '', sku: 'CS-SERB-001', data: '2026-03-01' },
+  { id: 12, nome: 'Recuperatori Calore CS-R', categoria: 'Accessori', prezzo: 'Da 2.800', stato: 'Attivo', descrizione: 'Recupero calore dal compressore per riscaldamento acqua e ambienti.', specifiche: 'Recupero: fino al 94% | Acqua calda: fino a 90°C', immagine: '', sku: 'CS-REC-001', data: '2026-03-05' },
 ];
 
 const DEFAULT_CLIENTI = [
-  { id: 1, nome: 'Paolo Mantovani', azienda: 'Metalform SpA', email: 'p.mantovani@metalform.it', telefono: '+39 049 555 0011', indirizzo: 'Via Industriale 15, 35010 Limena (PD)', piva: 'IT04512367890', tipo: 'Cliente', settore: 'Metalmeccanico', note: 'Contratto manutenzione annuale attivo. 3 compressori GA VSD+.', data: '2025-06-10' },
-  { id: 2, nome: 'Chiara Bortolotto', azienda: 'Alimentari Veneto Srl', email: 'c.bortolotto@alimveneto.it', telefono: '+39 049 555 0022', indirizzo: 'Via del Commercio 8, 35020 Saonara (PD)', piva: 'IT03298761450', tipo: 'Cliente', settore: 'Alimentare', note: 'Interessata a upgrade oil-free per linea confezionamento.', data: '2025-08-20' },
-  { id: 3, nome: 'Stefano Zago', azienda: 'Officine Zago', email: 's.zago@officinezago.it', telefono: '+39 049 555 0033', indirizzo: 'Via Artigianato 22, 35030 Selvazzano (PD)', piva: 'IT02187654320', tipo: 'Cliente', settore: 'Metalmeccanico', note: 'Noleggio compressore emergenza in corso.', data: '2025-10-15' },
-  { id: 4, nome: 'Laura Piccolo', azienda: 'Farmaceutica Padovana', email: 'l.piccolo@farmpad.it', telefono: '+39 049 555 0044', indirizzo: 'Via della Scienza 30, 35127 Padova', piva: 'IT05643219870', tipo: 'VIP', settore: 'Farmaceutico', note: 'Cliente VIP. 5 impianti oil-free ZR. Contratto full-service.', data: '2024-03-01' },
-  { id: 5, nome: 'Andrea Trevisan', azienda: 'Birrificio Euganeo', email: 'a.trevisan@birraeuganea.it', telefono: '+39 049 555 0055', indirizzo: 'Via dei Colli 5, 35032 Arqua Petrarca (PD)', piva: 'IT06789012345', tipo: 'Cliente', settore: 'Alimentare', note: 'Generatore azoto NGP installato per imbottigliamento.', data: '2025-04-12' },
-  { id: 6, nome: 'Giovanni Ferro', azienda: 'Edil Ferro Costruzioni', email: 'g.ferro@edilferro.it', telefono: '+39 049 555 0066', indirizzo: 'Via Roma 100, 35100 Padova', piva: 'IT01234509876', tipo: 'Prospect', settore: 'Edilizia', note: 'Richiesto preventivo compressori portatili per cantieri.', data: '2026-02-28' },
-  { id: 7, nome: 'Elena Carraro', azienda: 'Carraro Automotive', email: 'e.carraro@carraroauto.it', telefono: '+39 049 555 0077', indirizzo: 'Via dell\'Industria 50, 35011 Campodarsego (PD)', piva: 'IT07890123456', tipo: 'VIP', settore: 'Automotive', note: 'Impianto completo aria compressa + trattamento. 8 macchine.', data: '2024-01-15' },
+  { id: 1, nome: 'Paolo Demo', azienda: 'Demo Metal SpA', email: 'paolo.demo@cronoservice.demo', telefono: '+39 049 000 1010', indirizzo: 'Via Demo 15, 35100 Padova', piva: 'IT00000000001', tipo: 'Cliente', settore: 'Metalmeccanico', note: 'Contratto manutenzione annuale attivo. 3 compressori CS VSD.', data: '2025-06-10' },
+  { id: 2, nome: 'Chiara Demo', azienda: 'Demo Food Srl', email: 'chiara.demo@cronoservice.demo', telefono: '+39 049 000 1020', indirizzo: 'Via Demo 8, 35100 Padova', piva: 'IT00000000002', tipo: 'Cliente', settore: 'Alimentare', note: 'Interessata a upgrade oil-free per linea confezionamento.', data: '2025-08-20' },
+  { id: 3, nome: 'Stefano Demo', azienda: 'Demo Officine', email: 'stefano.demo@cronoservice.demo', telefono: '+39 049 000 1030', indirizzo: 'Via Demo 22, 35100 Padova', piva: 'IT00000000003', tipo: 'Cliente', settore: 'Metalmeccanico', note: 'Noleggio compressore emergenza in corso.', data: '2025-10-15' },
+  { id: 4, nome: 'Laura Demo', azienda: 'Demo Pharma', email: 'laura.demo@cronoservice.demo', telefono: '+39 049 000 1040', indirizzo: 'Via Demo 30, 35100 Padova', piva: 'IT00000000004', tipo: 'VIP', settore: 'Farmaceutico', note: 'Cliente VIP. 5 impianti oil-free CS-OF. Contratto full-service.', data: '2024-03-01' },
+  { id: 5, nome: 'Andrea Demo', azienda: 'Demo Brew', email: 'andrea.demo@cronoservice.demo', telefono: '+39 049 000 1050', indirizzo: 'Via Demo 5, 35100 Padova', piva: 'IT00000000005', tipo: 'Cliente', settore: 'Alimentare', note: 'Generatore azoto CS-N2 installato per imbottigliamento.', data: '2025-04-12' },
+  { id: 6, nome: 'Giovanni Demo', azienda: 'Demo Edil', email: 'giovanni.demo@cronoservice.demo', telefono: '+39 049 000 1060', indirizzo: 'Via Demo 100, 35100 Padova', piva: 'IT00000000006', tipo: 'Prospect', settore: 'Edilizia', note: 'Richiesto preventivo compressori portatili per cantieri.', data: '2026-02-28' },
+  { id: 7, nome: 'Elena Demo', azienda: 'Demo Auto', email: 'elena.demo@cronoservice.demo', telefono: '+39 049 000 1070', indirizzo: 'Via Demo 50, 35100 Padova', piva: 'IT00000000007', tipo: 'VIP', settore: 'Automotive', note: 'Impianto completo aria compressa + trattamento. 8 macchine.', data: '2024-01-15' },
 ];
 
 const DEFAULT_BLOG = [
@@ -37,16 +64,16 @@ const DEFAULT_BLOG = [
   { id: 5, titolo: 'VSD+ Inverter: Risparmio 50%', slug: 'vsd-inverter-risparmio', categoria: 'Efficienza', stato: 'Pubblicato', data: '2026-02-08', immagine: '', meta: '', contenuto: '' },
   { id: 6, titolo: 'Generazione Azoto On-Site', slug: 'generazione-azoto-on-site', categoria: 'Guide', stato: 'Pubblicato', data: '2026-02-01', immagine: '', meta: '', contenuto: '' },
   { id: 7, titolo: 'Perdite Aria Compressa: Costi', slug: 'perdite-aria-compressa-costi', categoria: 'Manutenzione', stato: 'Pubblicato', data: '2026-01-25', immagine: '', meta: '', contenuto: '' },
-  { id: 8, titolo: 'AIRnet: Tubazioni Alluminio', slug: 'airnet-tubazioni-alluminio', categoria: 'Novita', stato: 'Pubblicato', data: '2026-01-18', immagine: '', meta: '', contenuto: '' },
+  { id: 8, titolo: 'Tubazioni in alluminio Crono Pipe', slug: 'tubazioni-alluminio', categoria: 'Novita', stato: 'Pubblicato', data: '2026-01-18', immagine: '', meta: '', contenuto: '' },
   { id: 9, titolo: 'Progettazione Sala Compressori', slug: 'progettazione-sala-compressori', categoria: 'Guide', stato: 'Pubblicato', data: '2026-01-10', immagine: '', meta: '', contenuto: '' },
 ];
 
 const DEFAULT_MESSAGGI = [
-  { id: 1, data: '2026-03-07', nome: 'Paolo Mantovani', azienda: 'Metalform SpA', servizio: 'Manutenzione', stato: 'Nuovo', messaggio: 'Buongiorno, vorrei programmare la manutenzione annuale per i nostri 3 compressori GA VSD+.' },
-  { id: 2, data: '2026-03-06', nome: 'Chiara Bortolotto', azienda: 'Alimentari Veneto Srl', servizio: 'Oil-Free', stato: 'Nuovo', messaggio: 'Interessata a preventivo per compressore oil-free ZR per linea confezionamento.' },
-  { id: 3, data: '2026-03-05', nome: 'Stefano Zago', azienda: 'Officine Zago', servizio: 'Noleggio', stato: 'In lavorazione', messaggio: 'Richiesta noleggio compressore emergenza per 2 settimane.' },
-  { id: 4, data: '2026-03-04', nome: 'Laura Piccolo', azienda: 'Farmaceutica Padovana', servizio: 'Diagnosi', stato: 'Risposto', messaggio: 'Vorremmo fare una diagnosi energetica AirScan sul nostro impianto.' },
-  { id: 5, data: '2026-03-03', nome: 'Andrea Trevisan', azienda: 'Birrificio Euganeo', servizio: 'Generatore N2', stato: 'Risposto', messaggio: 'Informazioni sul generatore di azoto per la nostra linea di imbottigliamento.' },
+  { id: 1, data: '2026-03-07', nome: 'Paolo Demo', azienda: 'Demo Metal SpA', servizio: 'Manutenzione', stato: 'Nuovo', messaggio: 'Buongiorno, vorrei programmare la manutenzione annuale per i nostri 3 compressori CS VSD.' },
+  { id: 2, data: '2026-03-06', nome: 'Chiara Demo', azienda: 'Demo Food Srl', servizio: 'Oil-Free', stato: 'Nuovo', messaggio: 'Interessata a preventivo per compressore oil-free CS-OF per linea confezionamento.' },
+  { id: 3, data: '2026-03-05', nome: 'Stefano Demo', azienda: 'Demo Officine', servizio: 'Noleggio', stato: 'In lavorazione', messaggio: 'Richiesta noleggio compressore emergenza per 2 settimane.' },
+  { id: 4, data: '2026-03-04', nome: 'Laura Demo', azienda: 'Demo Pharma', servizio: 'Diagnosi', stato: 'Risposto', messaggio: 'Vorremmo fare una diagnosi energetica Crono Scan sul nostro impianto.' },
+  { id: 5, data: '2026-03-03', nome: 'Andrea Demo', azienda: 'Demo Brew', servizio: 'Generatore N2', stato: 'Risposto', messaggio: 'Informazioni sul generatore di azoto per la nostra linea di imbottigliamento.' },
 ];
 
 // ============ LOAD/SAVE ============
@@ -74,13 +101,13 @@ function handleLogin(e) {
   e.preventDefault();
   var user = document.getElementById('loginUser').value;
   var pass = document.getElementById('loginPass').value;
-  if (user === 'admin' && pass === 'Patatina') {
+  if (user === 'crono' && pass === '12345') {
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminPanel').style.display = 'block';
     sessionStorage.setItem('crono_auth', '1');
     initDashboard();
   } else {
-    showToast('Credenziali non valide. Usa: admin / admin', 'error');
+    showToast('Credenziali non valide. Usa: crono / 12345', 'error');
   }
 }
 

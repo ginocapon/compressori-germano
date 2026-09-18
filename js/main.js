@@ -1,6 +1,32 @@
 /* ============================================
-   CRONO COMPRESSOR — Main JavaScript
+   CRONO SERVICE — Main JavaScript
    ============================================ */
+
+(function injectCronoWatermark() {
+  if (document.querySelector('.brand-watermark')) return;
+  var mark =
+    '<svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path d="M22 68c-8-3-14-3-22-1" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
+      '<path d="M18 100H0" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
+      '<path d="M22 132c-8 3-14 5-22 5" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
+      '<rect x="86" y="10" width="28" height="20" rx="4" stroke="currentColor" stroke-width="7"/>' +
+      '<path d="M74 30h52" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>' +
+      '<circle cx="100" cy="114" r="66" stroke="currentColor" stroke-width="8"/>' +
+      '<circle cx="100" cy="114" r="50" stroke="currentColor" stroke-width="2.4" opacity="0.45"/>' +
+      '<path d="M100 56v12M100 160v12M42 114h12M146 114h12" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>' +
+      '<path d="M100 114l30-24" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>' +
+      '<path d="M100 114l-6 34" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>' +
+      '<circle cx="100" cy="114" r="8" fill="currentColor"/>' +
+    '</svg>';
+  var wrap = document.createElement('div');
+  wrap.className = 'brand-watermark';
+  wrap.setAttribute('aria-hidden', 'true');
+  wrap.innerHTML =
+    '<div class="brand-watermark-item brand-watermark-a">' + mark + '</div>' +
+    '<div class="brand-watermark-item brand-watermark-b">' + mark + '</div>' +
+    '<div class="brand-watermark-item brand-watermark-word">CRONO</div>';
+  document.body.insertBefore(wrap, document.body.firstChild);
+})();
 
 // Navbar scroll effect
 const navbar = document.getElementById('navbar');
@@ -112,14 +138,14 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 
 // ============ CHATBOT ============
 const chatbotResponses = {
-  'servizi': 'Offriamo: vendita compressori, manutenzione e assistenza 24/7, noleggio a breve/lungo termine, progettazione impianti aria compressa, diagnosi energetica AirScan e ricambi originali. Visita la pagina <a href="servizi.html" style="color:var(--arancione);font-weight:600;">Servizi</a> per i dettagli!',
-  'preventivo': 'Per richiedere un preventivo gratuito puoi: chiamarci al <strong>049 555 1234</strong>, scrivere a <strong>info@cronocompressor.it</strong>, oppure compilare il modulo nella pagina <a href="contatti.html" style="color:var(--arancione);font-weight:600;">Contatti</a>. Rispondiamo entro 24 ore!',
+  'servizi': 'Offriamo: vendita compressori, manutenzione e assistenza 24/7, noleggio a breve/lungo termine, progettazione impianti aria compressa, diagnosi energetica Crono Scan e ricambi originali. Visita la pagina <a href="servizi.html" style="color:var(--arancione);font-weight:600;">Servizi</a> per i dettagli!',
+  'preventivo': 'Per richiedere un preventivo gratuito puoi: chiamarci al <strong>049 000 1111</strong>, scrivere a <strong>info@cronoservice.demo</strong>, oppure compilare il modulo nella pagina <a href="contatti.html" style="color:var(--arancione);font-weight:600;">Contatti</a>. Rispondiamo entro 24 ore!',
   'oil-free': 'I nostri compressori oil-free garantiscono aria compressa 100% pura (Classe 0 ISO 8573-1), ideali per industria alimentare, farmaceutica ed elettronica. Potenze da 15 a 500 kW. Scopri di più nella pagina <a href="prodotti.html#oilfree" style="color:var(--arancione);font-weight:600;">Prodotti</a>.',
-  'contatti': 'Puoi contattarci in diversi modi:<br><strong>Tel:</strong> 049 555 1234<br><strong>Email:</strong> info@cronocompressor.it<br><strong>Indirizzo:</strong> Via dell\'Industria, 42 — 35100 Padova<br><strong>Orari:</strong> Lun-Ven 8:00-18:00, Sab 8:00-12:00',
+  'contatti': 'Puoi contattarci in diversi modi:<br><strong>Tel:</strong> 049 000 1111<br><strong>Email:</strong> info@cronoservice.demo<br><strong>Indirizzo:</strong> Via dell\'Industria, 42 — 35100 Padova<br><strong>Orari:</strong> Lun-Ven 8:00-18:00, Sab 8:00-12:00',
   'manutenzione': 'Offriamo manutenzione ordinaria (ogni 2.000-4.000 ore) e straordinaria con ricambi originali. Contratti fino a 5 anni con tempi di intervento garantiti e assistenza 24/7. <a href="servizi.html#manutenzione" style="color:var(--arancione);font-weight:600;">Maggiori info</a>.',
   'noleggio': 'Noleggiamo compressori e generatori a breve e lungo termine. Il servizio include trasporto, installazione e assistenza tecnica. Ideale per emergenze o picchi di produzione. <a href="servizi.html#noleggio" style="color:var(--arancione);font-weight:600;">Scopri il noleggio</a>.',
-  'risparmio': 'Con la diagnosi energetica AirScan individuiamo sprechi e perdite nel vostro impianto. Il risparmio medio raggiunge il 25-35% sulla bolletta annuale! <a href="servizi.html#diagnosi" style="color:var(--arancione);font-weight:600;">Scopri AirScan</a>.',
-  'default': 'Grazie per la tua domanda! Per una risposta dettagliata, ti consiglio di contattarci direttamente al <strong>049 555 1234</strong> o via email a <strong>info@cronocompressor.it</strong>. In alternativa, visita la pagina <a href="contatti.html" style="color:var(--arancione);font-weight:600;">Contatti</a>.'
+  'risparmio': 'Con la diagnosi energetica Crono Scan individuiamo sprechi e perdite nel vostro impianto. Il risparmio medio raggiunge il 25-35% sulla bolletta annuale! <a href="servizi.html#diagnosi" style="color:var(--arancione);font-weight:600;">Scopri Crono Scan</a>.',
+  'default': 'Grazie per la tua domanda! Per una risposta dettagliata, ti consiglio di contattarci direttamente al <strong>049 000 1111</strong> o via email a <strong>info@cronoservice.demo</strong>. In alternativa, visita la pagina <a href="contatti.html" style="color:var(--arancione);font-weight:600;">Contatti</a>.'
 };
 
 function chatbotGetResponse(msg) {
