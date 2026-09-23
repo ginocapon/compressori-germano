@@ -1,4 +1,4 @@
-/* Full-page cinematic scroll + wireframe torus (homepage only) */
+/* Full-page cinematic scroll + spirale 3D continua (homepage) */
 (function () {
   var body = document.body;
   if (!body || !body.classList.contains('fp-home')) return;
@@ -11,22 +11,44 @@
 
   document.documentElement.classList.add('fp-on');
 
+  var maxIndex = pages.length - 1;
+  var targetProgress = 0;
+  var smoothProgress = 0;
   var index = 0;
-  var progress = 0;
-  var locked = false;
-  var duration = window.innerWidth < 768 ? 780 : 1050;
-  var wheelLock = 0;
+  var lastWheelAt = 0;
+  var lastFrameAt = performance.now();
+  var gotoAnimTarget = null;
 
-  function easeInOutCubic(t) {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  var scrollSensitivity = window.innerWidth < 768 ? 0.00112 : 0.00092;
+  var wheelActiveMs = 280;
+  var idleSnapDelayMs = 550;
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function expSmooth(current, target, lambda, dt) {
+    var alpha = 1 - Math.exp(-lambda * dt);
+    return current + (target - current) * alpha;
   }
 
-  function applyTransforms(from, to, e) {
-    var shift = (to - from) * e;
+  function wheelDelta(e) {
+    var dy = e.deltaY;
+    if (e.deltaMode === 1) dy *= 18;
+    else if (e.deltaMode === 2) dy *= window.innerHeight;
+    return dy;
+  }
+
+  function applyDeckPosition(p) {
     pages.forEach(function (page, i) {
-      page.style.transform = 'translate3d(0,' + ((i - from) - shift) * 100 + '%,0)';
+      page.style.transform = 'translate3d(0,' + (i - p) * 100 + '%,0)';
     });
-    progress = from + (to - from) * e;
+  }
+
+  function publishProgress(wheelActive) {
+    applyDeckPosition(smoothProgress);
+    window.CronoSpiralScroll = smoothProgress / maxIndex;
+    window.CronoSpiralWheelActive = !!wheelActive;
+    syncIndexFromProgress(smoothProgress);
   }
 
   function setChrome() {
@@ -50,30 +72,21 @@
     });
   }
 
+  function syncIndexFromProgress(p) {
+    var next = Math.round(clamp(p, 0, maxIndex));
+    if (next !== index) {
+      index = next;
+      setChrome();
+    }
+  }
+
   function goTo(next, instant) {
-    next = Math.max(0, Math.min(pages.length - 1, next));
-    if (next === index && !instant) return;
-    if (locked && !instant) return;
-    var from = index;
-    index = next;
-    setChrome();
-    if (instant) {
-      applyTransforms(next, next, 1);
-      progress = next;
-      return;
-    }
-    locked = true;
-    var start = performance.now();
-    function frame(now) {
-      var t = Math.min(1, (now - start) / duration);
-      applyTransforms(from, next, easeInOutCubic(t));
-      if (t < 1) requestAnimationFrame(frame);
-      else {
-        locked = false;
-        progress = next;
-      }
-    }
-    requestAnimationFrame(frame);
+    next = clamp(next, 0, maxIndex);
+    targetProgress = next;
+    gotoAnimTarget = instant ? null : next;
+    lastWheelAt = 0;
+    if (instant) smoothProgress = next;
+    publishProgress(false);
   }
 
   function pageCanScroll(dir) {
@@ -88,13 +101,16 @@
 
   function onWheel(e) {
     if (e.ctrlKey) return;
-    var dir = e.deltaY > 0 ? 1 : -1;
+    var dy = wheelDelta(e);
+    var dir = dy > 0 ? 1 : -1;
     if (pageCanScroll(dir)) return;
     e.preventDefault();
-    var now = Date.now();
-    if (locked || now < wheelLock) return;
-    wheelLock = now + 180;
-    goTo(index + dir);
+
+    gotoAnimTarget = null;
+    lastWheelAt = performance.now();
+    targetProgress = clamp(targetProgress + dy * scrollSensitivity, 0, maxIndex);
+    smoothProgress = targetProgress;
+    publishProgress(true);
   }
 
   var touchY = 0;
@@ -105,10 +121,14 @@
   function onTouchEnd(e) {
     if (!e.changedTouches || !e.changedTouches[0]) return;
     var dy = touchY - e.changedTouches[0].clientY;
-    if (Math.abs(dy) < 56) return;
+    if (Math.abs(dy) < 48) return;
     var dir = dy > 0 ? 1 : -1;
     if (pageCanScroll(dir)) return;
-    goTo(index + dir);
+    gotoAnimTarget = null;
+    lastWheelAt = performance.now();
+    targetProgress = clamp(targetProgress + dir * 0.85, 0, maxIndex);
+    smoothProgress = targetProgress;
+    publishProgress(true);
   }
 
   function onKey(e) {
@@ -125,7 +145,7 @@
       goTo(0);
     } else if (e.key === 'End') {
       e.preventDefault();
-      goTo(pages.length - 1);
+      goTo(maxIndex);
     }
   }
 
@@ -166,109 +186,77 @@
     return i < 0 ? 0 : i;
   }
 
+  function motionLoop(now) {
+    var dt = clamp((now - lastFrameAt) / 1000, 0.001, 0.05);
+    lastFrameAt = now;
+    var wheelActive = now - lastWheelAt < wheelActiveMs;
+
+    if (gotoAnimTarget !== null) {
+      smoothProgress = expSmooth(smoothProgress, gotoAnimTarget, 26, dt);
+      targetProgress = smoothProgress;
+      if (Math.abs(smoothProgress - gotoAnimTarget) < 0.003) {
+        smoothProgress = gotoAnimTarget;
+        targetProgress = gotoAnimTarget;
+        gotoAnimTarget = null;
+      }
+      wheelActive = false;
+    } else if (wheelActive) {
+      smoothProgress = targetProgress;
+    } else if (now - lastWheelAt > idleSnapDelayMs) {
+      var snap = Math.round(targetProgress);
+      targetProgress = expSmooth(targetProgress, snap, 22, dt);
+      smoothProgress = targetProgress;
+    }
+
+    publishProgress(wheelActive);
+    requestAnimationFrame(motionLoop);
+  }
+
   window.addEventListener('wheel', onWheel, { passive: false });
   window.addEventListener('touchstart', onTouchStart, { passive: true });
   window.addEventListener('touchend', onTouchEnd, { passive: true });
   window.addEventListener('keydown', onKey);
   buildDots();
   bindAnchors();
-  applyTransforms(0, 0, 1);
-  goTo(startIndex(), true);
-  window.CronoFullpage = { goTo: goTo, getIndex: function () { return index; } };
 
-  /* ---------- 3D wireframe torus ---------- */
+  var start = startIndex();
+  targetProgress = start;
+  smoothProgress = start;
+  applyDeckPosition(start);
+  index = start;
+  setChrome();
+  window.CronoSpiralScroll = start / maxIndex;
+  window.CronoSpiralWheelActive = false;
+  requestAnimationFrame(motionLoop);
+
+  window.CronoFullpage = {
+    goTo: goTo,
+    getIndex: function () { return index; },
+    getScrollProgress: function () { return smoothProgress / maxIndex; }
+  };
+
+  if (typeof window.CronoSpiralConfig === 'undefined') window.CronoSpiralConfig = {};
+  if (!window.CronoSpiralConfig.timeline) {
+    window.CronoSpiralConfig.timeline = [
+      { t: 0, x: 0.05, y: 0.02, z: 0, rx: 0.62, ry: 0.22, rz: 0.04, s: 0.92, camZ: 5.0, frontLayer: 0 },
+      { t: 0.08, x: 0.08, y: -0.02, z: 0.08, rx: 0.52, ry: 0.38, rz: 0.05, s: 0.98, camZ: 4.7, frontLayer: 0 },
+      { t: 0.16, x: 0.1, y: -0.04, z: 0.12, rx: 0.48, ry: 0.48, rz: 0.07, s: 1.04, camZ: 4.45, frontLayer: 0.05 },
+      { t: 0.24, x: 0.04, y: 0, z: 0.22, rx: 0.72, ry: 0.28, rz: 0.04, s: 1.22, camZ: 3.85, frontLayer: 0.35 },
+      { t: 0.32, x: -0.12, y: 0.04, z: 0.18, rx: 0.55, ry: -0.35, rz: 0.08, s: 1.12, camZ: 4.05, frontLayer: 0.55 },
+      { t: 0.4, x: -0.28, y: 0.06, z: 0.1, rx: 0.4, ry: -0.52, rz: 0.1, s: 1.06, camZ: 4.25, frontLayer: 0.4 },
+      { t: 0.48, x: 0.22, y: 0, z: 0.05, rx: 0.34, ry: 0.58, rz: 0.06, s: 1.02, camZ: 4.4, frontLayer: 0.15 },
+      { t: 0.56, x: 0.38, y: -0.02, z: 0.02, rx: 0.3, ry: 0.68, rz: 0.05, s: 0.98, camZ: 4.5, frontLayer: 0.1 },
+      { t: 0.64, x: 0.08, y: 0.04, z: 0.14, rx: 0.88, ry: 0.32, rz: 0.04, s: 1.38, camZ: 3.35, frontLayer: 0.45 },
+      { t: 0.72, x: -0.42, y: 0.02, z: 0.06, rx: 0.36, ry: -0.42, rz: 0.09, s: 1.04, camZ: 4.2, frontLayer: 0.25 },
+      { t: 0.8, x: 0.35, y: 0.08, z: 0.05, rx: 0.5, ry: 0.52, rz: 0.05, s: 0.96, camZ: 4.45, frontLayer: 0.12 },
+      { t: 0.88, x: 0.06, y: -0.04, z: 0.18, rx: 0.82, ry: 0.22, rz: 0.1, s: 1.28, camZ: 3.55, frontLayer: 0.38 },
+      { t: 0.94, x: 0.1, y: 0.1, z: 0.08, rx: 0.55, ry: 0.26, rz: 0.16, s: 1.15, camZ: 3.85, frontLayer: 0.15 },
+      { t: 1, x: 0, y: -0.28, z: 0, rx: -0.28, ry: 0.18, rz: 0.02, s: 1.72, camZ: 3.15, frontLayer: 0.22 }
+    ];
+  }
+
   var canvas = document.getElementById('fpScene');
-  if (!canvas || typeof THREE === 'undefined') return;
-
-  var mobile = window.innerWidth < 768;
-  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !mobile, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.4 : 2));
-  renderer.setSize(window.innerWidth, window.innerHeight, false);
-  renderer.setClearColor(0x050910, 1);
-
-  var scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x050910, 0.085);
-
-  var camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 40);
-  camera.position.set(0, 0, 4.4);
-
-  var group = new THREE.Group();
-  scene.add(group);
-
-  var segs = mobile ? [36, 80] : [72, 140];
-  var torus = new THREE.LineSegments(
-    new THREE.WireframeGeometry(new THREE.TorusGeometry(1.12, 0.4, segs[0], segs[1])),
-    new THREE.LineBasicMaterial({ color: 0x9ec4e8, transparent: true, opacity: 0.62 })
-  );
-  group.add(torus);
-
-  var accent = new THREE.LineSegments(
-    new THREE.WireframeGeometry(new THREE.TorusGeometry(1.12, 0.4, 18, 48)),
-    new THREE.LineBasicMaterial({ color: 0xe8611a, transparent: true, opacity: 0.16 })
-  );
-  group.add(accent);
-
-  var shrink = 0.75;
-  var poses = [
-    { x: 0.05, y: 0.08, z: 0, rx: 0.72, ry: 0.18, rz: 0.08, s: 1.18 * shrink, camZ: 4.15 },
-    { x: 0.85, y: 0.05, z: 0, rx: 0.35, ry: 0.85, rz: 0.05, s: 0.92 * shrink, camZ: 4.55 },
-    { x: 0, y: 0, z: -0.2, rx: 1.45, ry: 0.05, rz: 0, s: 2.15 * shrink, camZ: 2.35 },
-    { x: -1.25, y: 0.05, z: 0, rx: 0.25, ry: -0.7, rz: 0.15, s: 1.02 * shrink, camZ: 4.4 },
-    { x: 0, y: -0.05, z: 0, rx: 1.15, ry: 0.4, rz: 0.1, s: 1.55 * shrink, camZ: 3.4 },
-    { x: 1.15, y: 0.12, z: 0, rx: 0.4, ry: 0.55, rz: 0, s: 0.95 * shrink, camZ: 4.5 },
-    { x: 0.1, y: 0.2, z: 0, rx: 0.55, ry: 0.2, rz: 0.2, s: 1.35 * shrink, camZ: 3.9 },
-    { x: -1.05, y: 0, z: 0, rx: 0.3, ry: -0.45, rz: 0, s: 0.88 * shrink, camZ: 4.7 },
-    { x: 1.05, y: -0.1, z: 0, rx: 0.2, ry: 0.9, rz: 0.1, s: 1.05 * shrink, camZ: 4.35 },
-    { x: 0, y: -0.85, z: 0, rx: -0.55, ry: 0.1, rz: 0, s: 2.35 * shrink, camZ: 3.15 }
-  ];
-
-  function lerp(a, b, t) { return a + (b - a) * t; }
-
-  function poseAt(p) {
-    var max = poses.length - 1;
-    var clamped = Math.max(0, Math.min(max, p));
-    var i = Math.floor(clamped);
-    var t = clamped - i;
-    var a = poses[i];
-    var b = poses[Math.min(max, i + 1)];
-    return {
-      x: lerp(a.x, b.x, t),
-      y: lerp(a.y, b.y, t),
-      z: lerp(a.z, b.z, t),
-      rx: lerp(a.rx, b.rx, t),
-      ry: lerp(a.ry, b.ry, t),
-      rz: lerp(a.rz, b.rz, t),
-      s: lerp(a.s, b.s, t),
-      camZ: lerp(a.camZ, b.camZ, t)
-    };
+  if (canvas && window.CronoSpiralScene) {
+    window.CronoSpiralScene.create(canvas);
   }
-
-  function onResize() {
-    var w = window.innerWidth;
-    var h = window.innerHeight;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h, false);
-  }
-  window.addEventListener('resize', onResize);
-
-  var running = true;
-  document.addEventListener('visibilitychange', function () {
-    running = document.visibilityState === 'visible';
-    if (running) requestAnimationFrame(tick);
-  });
-
-  function tick() {
-    if (!running) return;
-    var pose = poseAt(progress);
-    group.position.set(pose.x, pose.y, pose.z);
-    group.scale.setScalar(pose.s);
-    group.rotation.x = pose.rx;
-    group.rotation.y = pose.ry + performance.now() * 0.00012;
-    group.rotation.z = pose.rz;
-    camera.position.z = pose.camZ;
-    renderer.render(scene, camera);
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
 })();
