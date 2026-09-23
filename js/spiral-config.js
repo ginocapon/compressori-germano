@@ -14,7 +14,7 @@ window.CronoSpiralConfig = {
   noise: 0.024,
   distortion: 0.9,
   fogDensity: 0.068,
-  scrollDamping: 0.08,
+  scrollDamping: 1,
   mouseInfluence: 0.032,
   driftSpeed: 0.00009,
   mobileScale: 0.52

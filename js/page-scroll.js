@@ -15,12 +15,22 @@
   var targetProgress = 0;
   var smoothProgress = 0;
   var index = 0;
-  var locked = false;
-  var wheelAccum = 0;
-  var scrollSensitivity = window.innerWidth < 768 ? 0.00115 : 0.00095;
-  var snapThreshold = 0.22;
+  var lastWheelAt = 0;
+  var lastFrameAt = performance.now();
+
+  /* reattività scroll: più alto = segue prima la rotella (10–20) */
+  var deckSmooth = window.innerWidth < 768 ? 11 : 14;
+  var scrollSensitivity = window.innerWidth < 768 ? 0.00105 : 0.00088;
+  var idleSnapMs = 720;
+  var idleSnapStrength = 0.045;
 
   function lerp(a, b, t) { return a + (b - a) * t; }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function expSmooth(current, target, lambda, dt) {
+    var alpha = 1 - Math.exp(-lambda * dt);
+    return current + (target - current) * alpha;
+  }
 
   function applyDeckPosition(p) {
     pages.forEach(function (page, i) {
@@ -57,34 +67,17 @@
     }
   }
 
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
   function goTo(next, instant) {
     next = clamp(next, 0, maxIndex);
     targetProgress = next;
+    lastWheelAt = performance.now();
     if (instant) {
       smoothProgress = next;
       applyDeckPosition(next);
       index = next;
       setChrome();
       window.CronoSpiralScroll = next / maxIndex;
-      return;
     }
-    locked = true;
-    var start = smoothProgress;
-    var startTime = performance.now();
-    var duration = window.innerWidth < 768 ? 920 : 1180;
-    function frame(now) {
-      var t = clamp((now - startTime) / duration, 0, 1);
-      t = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-      smoothProgress = lerp(start, next, t);
-      applyDeckPosition(smoothProgress);
-      window.CronoSpiralScroll = smoothProgress / maxIndex;
-      syncIndexFromProgress(smoothProgress);
-      if (t < 1) requestAnimationFrame(frame);
-      else locked = false;
-    }
-    requestAnimationFrame(frame);
   }
 
   function pageCanScroll(dir) {
@@ -102,15 +95,8 @@
     var dir = e.deltaY > 0 ? 1 : -1;
     if (pageCanScroll(dir)) return;
     e.preventDefault();
-    if (locked) return;
-
-    wheelAccum += e.deltaY * scrollSensitivity;
+    lastWheelAt = performance.now();
     targetProgress = clamp(targetProgress + e.deltaY * scrollSensitivity, 0, maxIndex);
-
-    var nearest = Math.round(targetProgress);
-    if (Math.abs(targetProgress - nearest) < snapThreshold) {
-      targetProgress = lerp(targetProgress, nearest, 0.18);
-    }
   }
 
   var touchY = 0;
@@ -182,13 +168,20 @@
     return i < 0 ? 0 : i;
   }
 
-  function motionLoop() {
-    if (!locked) {
-      smoothProgress += (targetProgress - smoothProgress) * 0.08;
-      applyDeckPosition(smoothProgress);
-      syncIndexFromProgress(smoothProgress);
+  function motionLoop(now) {
+    var dt = clamp((now - lastFrameAt) / 1000, 0.001, 0.05);
+    lastFrameAt = now;
+
+    if (now - lastWheelAt > idleSnapMs) {
+      var snapTarget = Math.round(targetProgress);
+      targetProgress = lerp(targetProgress, snapTarget, idleSnapStrength);
     }
+
+    smoothProgress = expSmooth(smoothProgress, targetProgress, deckSmooth, dt);
+    applyDeckPosition(smoothProgress);
+    syncIndexFromProgress(smoothProgress);
     window.CronoSpiralScroll = smoothProgress / maxIndex;
+
     requestAnimationFrame(motionLoop);
   }
 
@@ -214,21 +207,23 @@
     getScrollProgress: function () { return smoothProgress / maxIndex; }
   };
 
-  /* Timeline globale spirale (scroll 0 → 1) — modifica in js/spiral-config.js */
   if (typeof window.CronoSpiralConfig === 'undefined') window.CronoSpiralConfig = {};
   if (!window.CronoSpiralConfig.timeline) {
     window.CronoSpiralConfig.timeline = [
-      { t: 0, x: 0.05, y: 0.02, z: 0, rx: 0.62, ry: 0.22, rz: 0.04, s: 0.88, camZ: 5.2, frontLayer: 0 },
-      { t: 0.12, x: 0.1, y: -0.05, z: 0.15, rx: 0.45, ry: 0.55, rz: 0.08, s: 1.05, camZ: 4.4, frontLayer: 0 },
-      { t: 0.22, x: 0, y: 0, z: 0.35, rx: 0.95, ry: 0.12, rz: 0, s: 1.55, camZ: 2.85, frontLayer: 0.85 },
-      { t: 0.32, x: -0.35, y: 0.08, z: 0.1, rx: 0.38, ry: -0.62, rz: 0.12, s: 1.08, camZ: 4.2, frontLayer: 0 },
-      { t: 0.42, x: 0.55, y: -0.02, z: -0.05, rx: 0.28, ry: 0.78, rz: 0.06, s: 0.98, camZ: 4.55, frontLayer: 0 },
-      { t: 0.52, x: 0, y: 0.05, z: 0.2, rx: 1.35, ry: 0.35, rz: 0.05, s: 1.75, camZ: 2.55, frontLayer: 0.9 },
-      { t: 0.62, x: -0.75, y: 0, z: 0, rx: 0.32, ry: -0.48, rz: 0.1, s: 1.02, camZ: 4.35, frontLayer: 0 },
-      { t: 0.72, x: 0.65, y: 0.12, z: 0.08, rx: 0.55, ry: 0.65, rz: 0.04, s: 0.92, camZ: 4.6, frontLayer: 0 },
-      { t: 0.82, x: 0, y: -0.08, z: 0.25, rx: 1.05, ry: 0.18, rz: 0.15, s: 1.45, camZ: 3.05, frontLayer: 0.75 },
-      { t: 0.92, x: 0.15, y: 0.15, z: 0.05, rx: 0.48, ry: 0.28, rz: 0.22, s: 1.22, camZ: 3.65, frontLayer: 0 },
-      { t: 1, x: 0, y: -0.35, z: 0, rx: -0.35, ry: 0.15, rz: 0, s: 2.05, camZ: 2.95, frontLayer: 0.35 }
+      { t: 0, x: 0.05, y: 0.02, z: 0, rx: 0.62, ry: 0.22, rz: 0.04, s: 0.92, camZ: 5.0, frontLayer: 0 },
+      { t: 0.08, x: 0.08, y: -0.02, z: 0.08, rx: 0.52, ry: 0.38, rz: 0.05, s: 0.98, camZ: 4.7, frontLayer: 0 },
+      { t: 0.16, x: 0.1, y: -0.04, z: 0.12, rx: 0.48, ry: 0.48, rz: 0.07, s: 1.04, camZ: 4.45, frontLayer: 0.05 },
+      { t: 0.24, x: 0.04, y: 0, z: 0.22, rx: 0.72, ry: 0.28, rz: 0.04, s: 1.22, camZ: 3.85, frontLayer: 0.35 },
+      { t: 0.32, x: -0.12, y: 0.04, z: 0.18, rx: 0.55, ry: -0.35, rz: 0.08, s: 1.12, camZ: 4.05, frontLayer: 0.55 },
+      { t: 0.4, x: -0.28, y: 0.06, z: 0.1, rx: 0.4, ry: -0.52, rz: 0.1, s: 1.06, camZ: 4.25, frontLayer: 0.4 },
+      { t: 0.48, x: 0.22, y: 0, z: 0.05, rx: 0.34, ry: 0.58, rz: 0.06, s: 1.02, camZ: 4.4, frontLayer: 0.15 },
+      { t: 0.56, x: 0.38, y: -0.02, z: 0.02, rx: 0.3, ry: 0.68, rz: 0.05, s: 0.98, camZ: 4.5, frontLayer: 0.1 },
+      { t: 0.64, x: 0.08, y: 0.04, z: 0.14, rx: 0.88, ry: 0.32, rz: 0.04, s: 1.38, camZ: 3.35, frontLayer: 0.45 },
+      { t: 0.72, x: -0.42, y: 0.02, z: 0.06, rx: 0.36, ry: -0.42, rz: 0.09, s: 1.04, camZ: 4.2, frontLayer: 0.25 },
+      { t: 0.8, x: 0.35, y: 0.08, z: 0.05, rx: 0.5, ry: 0.52, rz: 0.05, s: 0.96, camZ: 4.45, frontLayer: 0.12 },
+      { t: 0.88, x: 0.06, y: -0.04, z: 0.18, rx: 0.82, ry: 0.22, rz: 0.1, s: 1.28, camZ: 3.55, frontLayer: 0.38 },
+      { t: 0.94, x: 0.1, y: 0.1, z: 0.08, rx: 0.55, ry: 0.26, rz: 0.16, s: 1.15, camZ: 3.85, frontLayer: 0.15 },
+      { t: 1, x: 0, y: -0.28, z: 0, rx: -0.28, ry: 0.18, rz: 0.02, s: 1.72, camZ: 3.15, frontLayer: 0.22 }
     ];
   }
 

@@ -136,7 +136,7 @@
     var b = tl[Math.min(tl.length - 1, i + 1)];
     var span = b.t - a.t || 1;
     var u = clamp((t - a.t) / span, 0, 1);
-    u = u * u * (3 - 2 * u);
+    u = u * u * u * (u * (u * 6 - 15) + 10);
     var out = {};
     ['x', 'y', 'z', 'rx', 'ry', 'rz', 's', 'camZ', 'camX', 'camY', 'frontLayer'].forEach(function (key) {
       var va = a[key];
@@ -249,11 +249,12 @@
     }
     rebuildHelixMeta();
 
-    var smoothScroll = 0;
     var mouse = { x: 0, y: 0 };
     var smoothMouse = { x: 0, y: 0 };
+    var smoothFront = 0;
     var running = true;
     var time = 0;
+    var lastTickAt = performance.now();
 
     function updateInstances(scrollNorm) {
       var nAmt = cfg.noise * cfg.distortion;
@@ -261,16 +262,16 @@
       for (var i = 0; i < segCount; i++) {
         var meta = helixMeta[i];
         var f = meta.f;
-        var angle = meta.angle + scrollNorm * 0.85;
+        var angle = meta.angle + scrollNorm * 0.55;
         var nx = simplex3(f * 2.1 + t, 0.4, 1.2) * nAmt;
         var ny = simplex3(0.2, f * 2.3 + t, 0.8) * nAmt;
         var nz = simplex3(1.1, f * 1.7, t) * nAmt * 1.6;
         var r = meta.radius + simplex3(f * 3, t, 0.5) * nAmt * 0.6;
         var x = Math.cos(angle) * r + nx;
         var y = Math.sin(angle) * r + ny;
-        var z = meta.z + nz - scrollNorm * 2.2;
+        var z = meta.z + nz - scrollNorm * 1.35;
         var ringScale = 0.62 + 0.48 * (0.35 + 0.65 * Math.sin(f * Math.PI));
-        var parallax = 1 + (f - 0.5) * 0.12 * scrollNorm;
+        var parallax = 1 + (f - 0.5) * 0.06 * scrollNorm;
         dummy.position.set(x, y, z);
         dummy.rotation.set(
           Math.PI / 2 + ny * 2,
@@ -305,17 +306,18 @@
       if (running) requestAnimationFrame(tick);
     });
 
-    function tick() {
+    function tick(now) {
       if (!running) return;
-      var dt = 0.016;
+      var dt = clamp((now - lastTickAt) / 1000, 0.001, 0.05);
+      lastTickAt = now;
       time += dt;
 
-      var target = typeof global.CronoSpiralScroll === 'number' ? global.CronoSpiralScroll : 0;
-      smoothScroll += (target - smoothScroll) * cfg.scrollDamping;
-      smoothMouse.x += (mouse.x - smoothMouse.x) * 0.06;
-      smoothMouse.y += (mouse.y - smoothMouse.y) * 0.06;
+      var scrollNorm = typeof global.CronoSpiralScroll === 'number' ? global.CronoSpiralScroll : 0;
+      var mouseAlpha = 1 - Math.exp(-10 * dt);
+      smoothMouse.x += (mouse.x - smoothMouse.x) * mouseAlpha;
+      smoothMouse.y += (mouse.y - smoothMouse.y) * mouseAlpha;
 
-      var pose = sampleTimeline(smoothScroll) || {
+      var pose = sampleTimeline(scrollNorm) || {
         x: 0, y: 0, z: 0, rx: 0.75, ry: 0.15, rz: 0.05, s: 1, camZ: 4.5, camX: 0, camY: 0, frontLayer: 0
       };
 
@@ -333,11 +335,13 @@
       scene.fog.density = cfg.fogDensity;
       ringMat.opacity = cfg.opacity;
 
-      updateInstances(smoothScroll);
+      updateInstances(scrollNorm);
 
-      var front = pose.frontLayer || 0;
-      canvas.style.zIndex = front > 0.5 ? '3' : '0';
-      canvas.style.opacity = String(0.92 + front * 0.08);
+      var frontTarget = pose.frontLayer || 0;
+      var frontAlpha = 1 - Math.exp(-8 * dt);
+      smoothFront += (frontTarget - smoothFront) * frontAlpha;
+      canvas.style.zIndex = smoothFront > 0.42 ? '3' : '0';
+      canvas.style.opacity = String(0.9 + smoothFront * 0.1);
 
       renderer.render(scene, camera);
       requestAnimationFrame(tick);
@@ -347,7 +351,7 @@
 
     return {
       setScroll: function (t) { global.CronoSpiralScroll = clamp(t, 0, 1); },
-      getSmoothScroll: function () { return smoothScroll; },
+      getSmoothScroll: function () { return global.CronoSpiralScroll || 0; },
       rebuild: function () {
         rebuildHelixMeta();
         onResize();

@@ -21,7 +21,7 @@ Edita `js/spiral-config.js`:
 - **thickness** — spessore di ogni anello
 - **glow** / **opacity** — intensità luminosa
 - **noise** × **distortion** — deformazione organica (tenere basse)
-- **scrollDamping** — smoothing scroll (0.06 = più morbido, 0.12 = più reattivo)
+- **scrollDamping** — lasciare a `1` (lo smoothing è gestito da `page-scroll.js` via `deckSmooth`)
 - **mouseInfluence** — parallax mouse
 
 ## Timeline scroll (0 → 100%)
