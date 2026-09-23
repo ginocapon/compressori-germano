@@ -1,4 +1,4 @@
-/* Full-page cinematic scroll + wireframe torus (homepage only) */
+/* Full-page cinematic scroll + spirale 3D continua (homepage) */
 (function () {
   var body = document.body;
   if (!body || !body.classList.contains('fp-home')) return;
@@ -11,22 +11,21 @@
 
   document.documentElement.classList.add('fp-on');
 
+  var maxIndex = pages.length - 1;
+  var targetProgress = 0;
+  var smoothProgress = 0;
   var index = 0;
-  var progress = 0;
   var locked = false;
-  var duration = window.innerWidth < 768 ? 780 : 1050;
-  var wheelLock = 0;
+  var wheelAccum = 0;
+  var scrollSensitivity = window.innerWidth < 768 ? 0.00115 : 0.00095;
+  var snapThreshold = 0.22;
 
-  function easeInOutCubic(t) {
-    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  }
+  function lerp(a, b, t) { return a + (b - a) * t; }
 
-  function applyTransforms(from, to, e) {
-    var shift = (to - from) * e;
+  function applyDeckPosition(p) {
     pages.forEach(function (page, i) {
-      page.style.transform = 'translate3d(0,' + ((i - from) - shift) * 100 + '%,0)';
+      page.style.transform = 'translate3d(0,' + (i - p) * 100 + '%,0)';
     });
-    progress = from + (to - from) * e;
   }
 
   function setChrome() {
@@ -50,28 +49,40 @@
     });
   }
 
+  function syncIndexFromProgress(p) {
+    var next = Math.round(clamp(p, 0, maxIndex));
+    if (next !== index) {
+      index = next;
+      setChrome();
+    }
+  }
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
   function goTo(next, instant) {
-    next = Math.max(0, Math.min(pages.length - 1, next));
-    if (next === index && !instant) return;
-    if (locked && !instant) return;
-    var from = index;
-    index = next;
-    setChrome();
+    next = clamp(next, 0, maxIndex);
+    targetProgress = next;
     if (instant) {
-      applyTransforms(next, next, 1);
-      progress = next;
+      smoothProgress = next;
+      applyDeckPosition(next);
+      index = next;
+      setChrome();
+      window.CronoSpiralScroll = next / maxIndex;
       return;
     }
     locked = true;
-    var start = performance.now();
+    var start = smoothProgress;
+    var startTime = performance.now();
+    var duration = window.innerWidth < 768 ? 920 : 1180;
     function frame(now) {
-      var t = Math.min(1, (now - start) / duration);
-      applyTransforms(from, next, easeInOutCubic(t));
+      var t = clamp((now - startTime) / duration, 0, 1);
+      t = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      smoothProgress = lerp(start, next, t);
+      applyDeckPosition(smoothProgress);
+      window.CronoSpiralScroll = smoothProgress / maxIndex;
+      syncIndexFromProgress(smoothProgress);
       if (t < 1) requestAnimationFrame(frame);
-      else {
-        locked = false;
-        progress = next;
-      }
+      else locked = false;
     }
     requestAnimationFrame(frame);
   }
@@ -91,10 +102,15 @@
     var dir = e.deltaY > 0 ? 1 : -1;
     if (pageCanScroll(dir)) return;
     e.preventDefault();
-    var now = Date.now();
-    if (locked || now < wheelLock) return;
-    wheelLock = now + 180;
-    goTo(index + dir);
+    if (locked) return;
+
+    wheelAccum += e.deltaY * scrollSensitivity;
+    targetProgress = clamp(targetProgress + e.deltaY * scrollSensitivity, 0, maxIndex);
+
+    var nearest = Math.round(targetProgress);
+    if (Math.abs(targetProgress - nearest) < snapThreshold) {
+      targetProgress = lerp(targetProgress, nearest, 0.18);
+    }
   }
 
   var touchY = 0;
@@ -105,7 +121,7 @@
   function onTouchEnd(e) {
     if (!e.changedTouches || !e.changedTouches[0]) return;
     var dy = touchY - e.changedTouches[0].clientY;
-    if (Math.abs(dy) < 56) return;
+    if (Math.abs(dy) < 48) return;
     var dir = dy > 0 ? 1 : -1;
     if (pageCanScroll(dir)) return;
     goTo(index + dir);
@@ -125,7 +141,7 @@
       goTo(0);
     } else if (e.key === 'End') {
       e.preventDefault();
-      goTo(pages.length - 1);
+      goTo(maxIndex);
     }
   }
 
@@ -166,109 +182,58 @@
     return i < 0 ? 0 : i;
   }
 
+  function motionLoop() {
+    if (!locked) {
+      smoothProgress += (targetProgress - smoothProgress) * 0.08;
+      applyDeckPosition(smoothProgress);
+      syncIndexFromProgress(smoothProgress);
+    }
+    window.CronoSpiralScroll = smoothProgress / maxIndex;
+    requestAnimationFrame(motionLoop);
+  }
+
   window.addEventListener('wheel', onWheel, { passive: false });
   window.addEventListener('touchstart', onTouchStart, { passive: true });
   window.addEventListener('touchend', onTouchEnd, { passive: true });
   window.addEventListener('keydown', onKey);
   buildDots();
   bindAnchors();
-  applyTransforms(0, 0, 1);
-  goTo(startIndex(), true);
-  window.CronoFullpage = { goTo: goTo, getIndex: function () { return index; } };
 
-  /* ---------- 3D wireframe torus ---------- */
+  var start = startIndex();
+  targetProgress = start;
+  smoothProgress = start;
+  applyDeckPosition(start);
+  index = start;
+  setChrome();
+  window.CronoSpiralScroll = start / maxIndex;
+  requestAnimationFrame(motionLoop);
+
+  window.CronoFullpage = {
+    goTo: goTo,
+    getIndex: function () { return index; },
+    getScrollProgress: function () { return smoothProgress / maxIndex; }
+  };
+
+  /* Timeline globale spirale (scroll 0 → 1) — modifica in js/spiral-config.js */
+  if (typeof window.CronoSpiralConfig === 'undefined') window.CronoSpiralConfig = {};
+  if (!window.CronoSpiralConfig.timeline) {
+    window.CronoSpiralConfig.timeline = [
+      { t: 0, x: 0.05, y: 0.02, z: 0, rx: 0.62, ry: 0.22, rz: 0.04, s: 0.88, camZ: 5.2, frontLayer: 0 },
+      { t: 0.12, x: 0.1, y: -0.05, z: 0.15, rx: 0.45, ry: 0.55, rz: 0.08, s: 1.05, camZ: 4.4, frontLayer: 0 },
+      { t: 0.22, x: 0, y: 0, z: 0.35, rx: 0.95, ry: 0.12, rz: 0, s: 1.55, camZ: 2.85, frontLayer: 0.85 },
+      { t: 0.32, x: -0.35, y: 0.08, z: 0.1, rx: 0.38, ry: -0.62, rz: 0.12, s: 1.08, camZ: 4.2, frontLayer: 0 },
+      { t: 0.42, x: 0.55, y: -0.02, z: -0.05, rx: 0.28, ry: 0.78, rz: 0.06, s: 0.98, camZ: 4.55, frontLayer: 0 },
+      { t: 0.52, x: 0, y: 0.05, z: 0.2, rx: 1.35, ry: 0.35, rz: 0.05, s: 1.75, camZ: 2.55, frontLayer: 0.9 },
+      { t: 0.62, x: -0.75, y: 0, z: 0, rx: 0.32, ry: -0.48, rz: 0.1, s: 1.02, camZ: 4.35, frontLayer: 0 },
+      { t: 0.72, x: 0.65, y: 0.12, z: 0.08, rx: 0.55, ry: 0.65, rz: 0.04, s: 0.92, camZ: 4.6, frontLayer: 0 },
+      { t: 0.82, x: 0, y: -0.08, z: 0.25, rx: 1.05, ry: 0.18, rz: 0.15, s: 1.45, camZ: 3.05, frontLayer: 0.75 },
+      { t: 0.92, x: 0.15, y: 0.15, z: 0.05, rx: 0.48, ry: 0.28, rz: 0.22, s: 1.22, camZ: 3.65, frontLayer: 0 },
+      { t: 1, x: 0, y: -0.35, z: 0, rx: -0.35, ry: 0.15, rz: 0, s: 2.05, camZ: 2.95, frontLayer: 0.35 }
+    ];
+  }
+
   var canvas = document.getElementById('fpScene');
-  if (!canvas || typeof THREE === 'undefined') return;
-
-  var mobile = window.innerWidth < 768;
-  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !mobile, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.4 : 2));
-  renderer.setSize(window.innerWidth, window.innerHeight, false);
-  renderer.setClearColor(0x050910, 1);
-
-  var scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x050910, 0.085);
-
-  var camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 40);
-  camera.position.set(0, 0, 4.4);
-
-  var group = new THREE.Group();
-  scene.add(group);
-
-  var segs = mobile ? [36, 80] : [72, 140];
-  var torus = new THREE.LineSegments(
-    new THREE.WireframeGeometry(new THREE.TorusGeometry(1.12, 0.4, segs[0], segs[1])),
-    new THREE.LineBasicMaterial({ color: 0x9ec4e8, transparent: true, opacity: 0.62 })
-  );
-  group.add(torus);
-
-  var accent = new THREE.LineSegments(
-    new THREE.WireframeGeometry(new THREE.TorusGeometry(1.12, 0.4, 18, 48)),
-    new THREE.LineBasicMaterial({ color: 0xe8611a, transparent: true, opacity: 0.16 })
-  );
-  group.add(accent);
-
-  var shrink = 0.75;
-  var poses = [
-    { x: 0.05, y: 0.08, z: 0, rx: 0.72, ry: 0.18, rz: 0.08, s: 1.18 * shrink, camZ: 4.15 },
-    { x: 0.85, y: 0.05, z: 0, rx: 0.35, ry: 0.85, rz: 0.05, s: 0.92 * shrink, camZ: 4.55 },
-    { x: 0, y: 0, z: -0.2, rx: 1.45, ry: 0.05, rz: 0, s: 2.15 * shrink, camZ: 2.35 },
-    { x: -1.25, y: 0.05, z: 0, rx: 0.25, ry: -0.7, rz: 0.15, s: 1.02 * shrink, camZ: 4.4 },
-    { x: 0, y: -0.05, z: 0, rx: 1.15, ry: 0.4, rz: 0.1, s: 1.55 * shrink, camZ: 3.4 },
-    { x: 1.15, y: 0.12, z: 0, rx: 0.4, ry: 0.55, rz: 0, s: 0.95 * shrink, camZ: 4.5 },
-    { x: 0.1, y: 0.2, z: 0, rx: 0.55, ry: 0.2, rz: 0.2, s: 1.35 * shrink, camZ: 3.9 },
-    { x: -1.05, y: 0, z: 0, rx: 0.3, ry: -0.45, rz: 0, s: 0.88 * shrink, camZ: 4.7 },
-    { x: 1.05, y: -0.1, z: 0, rx: 0.2, ry: 0.9, rz: 0.1, s: 1.05 * shrink, camZ: 4.35 },
-    { x: 0, y: -0.85, z: 0, rx: -0.55, ry: 0.1, rz: 0, s: 2.35 * shrink, camZ: 3.15 }
-  ];
-
-  function lerp(a, b, t) { return a + (b - a) * t; }
-
-  function poseAt(p) {
-    var max = poses.length - 1;
-    var clamped = Math.max(0, Math.min(max, p));
-    var i = Math.floor(clamped);
-    var t = clamped - i;
-    var a = poses[i];
-    var b = poses[Math.min(max, i + 1)];
-    return {
-      x: lerp(a.x, b.x, t),
-      y: lerp(a.y, b.y, t),
-      z: lerp(a.z, b.z, t),
-      rx: lerp(a.rx, b.rx, t),
-      ry: lerp(a.ry, b.ry, t),
-      rz: lerp(a.rz, b.rz, t),
-      s: lerp(a.s, b.s, t),
-      camZ: lerp(a.camZ, b.camZ, t)
-    };
+  if (canvas && window.CronoSpiralScene) {
+    window.CronoSpiralScene.create(canvas);
   }
-
-  function onResize() {
-    var w = window.innerWidth;
-    var h = window.innerHeight;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h, false);
-  }
-  window.addEventListener('resize', onResize);
-
-  var running = true;
-  document.addEventListener('visibilitychange', function () {
-    running = document.visibilityState === 'visible';
-    if (running) requestAnimationFrame(tick);
-  });
-
-  function tick() {
-    if (!running) return;
-    var pose = poseAt(progress);
-    group.position.set(pose.x, pose.y, pose.z);
-    group.scale.setScalar(pose.s);
-    group.rotation.x = pose.rx;
-    group.rotation.y = pose.ry + performance.now() * 0.00012;
-    group.rotation.z = pose.rz;
-    camera.position.z = pose.camZ;
-    renderer.render(scene, camera);
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
 })();
