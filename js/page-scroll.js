@@ -17,12 +17,11 @@
   var index = 0;
   var lastWheelAt = 0;
   var lastFrameAt = performance.now();
+  var gotoAnimTarget = null;
 
-  /* reattività scroll: più alto = segue prima la rotella (10–20) */
-  var deckSmooth = window.innerWidth < 768 ? 11 : 14;
-  var scrollSensitivity = window.innerWidth < 768 ? 0.00105 : 0.00088;
-  var idleSnapMs = 720;
-  var idleSnapStrength = 0.045;
+  var scrollSensitivity = window.innerWidth < 768 ? 0.00112 : 0.00092;
+  var wheelActiveMs = 280;
+  var idleSnapDelayMs = 550;
 
   function lerp(a, b, t) { return a + (b - a) * t; }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
@@ -32,10 +31,24 @@
     return current + (target - current) * alpha;
   }
 
+  function wheelDelta(e) {
+    var dy = e.deltaY;
+    if (e.deltaMode === 1) dy *= 18;
+    else if (e.deltaMode === 2) dy *= window.innerHeight;
+    return dy;
+  }
+
   function applyDeckPosition(p) {
     pages.forEach(function (page, i) {
       page.style.transform = 'translate3d(0,' + (i - p) * 100 + '%,0)';
     });
+  }
+
+  function publishProgress(wheelActive) {
+    applyDeckPosition(smoothProgress);
+    window.CronoSpiralScroll = smoothProgress / maxIndex;
+    window.CronoSpiralWheelActive = !!wheelActive;
+    syncIndexFromProgress(smoothProgress);
   }
 
   function setChrome() {
@@ -70,14 +83,10 @@
   function goTo(next, instant) {
     next = clamp(next, 0, maxIndex);
     targetProgress = next;
-    lastWheelAt = performance.now();
-    if (instant) {
-      smoothProgress = next;
-      applyDeckPosition(next);
-      index = next;
-      setChrome();
-      window.CronoSpiralScroll = next / maxIndex;
-    }
+    gotoAnimTarget = instant ? null : next;
+    lastWheelAt = 0;
+    if (instant) smoothProgress = next;
+    publishProgress(false);
   }
 
   function pageCanScroll(dir) {
@@ -92,11 +101,16 @@
 
   function onWheel(e) {
     if (e.ctrlKey) return;
-    var dir = e.deltaY > 0 ? 1 : -1;
+    var dy = wheelDelta(e);
+    var dir = dy > 0 ? 1 : -1;
     if (pageCanScroll(dir)) return;
     e.preventDefault();
+
+    gotoAnimTarget = null;
     lastWheelAt = performance.now();
-    targetProgress = clamp(targetProgress + e.deltaY * scrollSensitivity, 0, maxIndex);
+    targetProgress = clamp(targetProgress + dy * scrollSensitivity, 0, maxIndex);
+    smoothProgress = targetProgress;
+    publishProgress(true);
   }
 
   var touchY = 0;
@@ -110,7 +124,11 @@
     if (Math.abs(dy) < 48) return;
     var dir = dy > 0 ? 1 : -1;
     if (pageCanScroll(dir)) return;
-    goTo(index + dir);
+    gotoAnimTarget = null;
+    lastWheelAt = performance.now();
+    targetProgress = clamp(targetProgress + dir * 0.85, 0, maxIndex);
+    smoothProgress = targetProgress;
+    publishProgress(true);
   }
 
   function onKey(e) {
@@ -171,17 +189,26 @@
   function motionLoop(now) {
     var dt = clamp((now - lastFrameAt) / 1000, 0.001, 0.05);
     lastFrameAt = now;
+    var wheelActive = now - lastWheelAt < wheelActiveMs;
 
-    if (now - lastWheelAt > idleSnapMs) {
-      var snapTarget = Math.round(targetProgress);
-      targetProgress = lerp(targetProgress, snapTarget, idleSnapStrength);
+    if (gotoAnimTarget !== null) {
+      smoothProgress = expSmooth(smoothProgress, gotoAnimTarget, 26, dt);
+      targetProgress = smoothProgress;
+      if (Math.abs(smoothProgress - gotoAnimTarget) < 0.003) {
+        smoothProgress = gotoAnimTarget;
+        targetProgress = gotoAnimTarget;
+        gotoAnimTarget = null;
+      }
+      wheelActive = false;
+    } else if (wheelActive) {
+      smoothProgress = targetProgress;
+    } else if (now - lastWheelAt > idleSnapDelayMs) {
+      var snap = Math.round(targetProgress);
+      targetProgress = expSmooth(targetProgress, snap, 22, dt);
+      smoothProgress = targetProgress;
     }
 
-    smoothProgress = expSmooth(smoothProgress, targetProgress, deckSmooth, dt);
-    applyDeckPosition(smoothProgress);
-    syncIndexFromProgress(smoothProgress);
-    window.CronoSpiralScroll = smoothProgress / maxIndex;
-
+    publishProgress(wheelActive);
     requestAnimationFrame(motionLoop);
   }
 
@@ -199,6 +226,7 @@
   index = start;
   setChrome();
   window.CronoSpiralScroll = start / maxIndex;
+  window.CronoSpiralWheelActive = false;
   requestAnimationFrame(motionLoop);
 
   window.CronoFullpage = {

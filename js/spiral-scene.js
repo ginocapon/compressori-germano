@@ -258,7 +258,8 @@
 
     function updateInstances(scrollNorm) {
       var nAmt = cfg.noise * cfg.distortion;
-      var t = time * 0.35;
+      var scrolling = !!global.CronoSpiralWheelActive;
+      var t = scrolling ? scrollNorm * 8 : time * 0.35;
       for (var i = 0; i < segCount; i++) {
         var meta = helixMeta[i];
         var f = meta.f;
@@ -324,7 +325,8 @@
       root.position.set(pose.x || 0, pose.y || 0, pose.z || 0);
       root.scale.setScalar(pose.s || 1);
       root.rotation.x = (pose.rx || 0) + smoothMouse.y * cfg.mouseInfluence;
-      root.rotation.y = (pose.ry || 0) + smoothMouse.x * cfg.mouseInfluence + time * cfg.driftSpeed;
+      var drift = global.CronoSpiralWheelActive ? 0 : time * cfg.driftSpeed;
+      root.rotation.y = (pose.ry || 0) + smoothMouse.x * cfg.mouseInfluence + drift;
       root.rotation.z = pose.rz || 0;
 
       camera.position.x = (pose.camX || 0) + smoothMouse.x * 0.12;
@@ -338,8 +340,12 @@
       updateInstances(scrollNorm);
 
       var frontTarget = pose.frontLayer || 0;
-      var frontAlpha = 1 - Math.exp(-8 * dt);
-      smoothFront += (frontTarget - smoothFront) * frontAlpha;
+      if (global.CronoSpiralWheelActive) {
+        smoothFront = frontTarget;
+      } else {
+        var frontAlpha = 1 - Math.exp(-14 * dt);
+        smoothFront += (frontTarget - smoothFront) * frontAlpha;
+      }
       canvas.style.zIndex = smoothFront > 0.42 ? '3' : '0';
       canvas.style.opacity = String(0.9 + smoothFront * 0.1);
 
