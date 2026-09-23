@@ -180,14 +180,14 @@
   var canvas = document.getElementById('fpScene');
   if (!canvas || typeof THREE === 'undefined') return;
 
-  var mobile = window.innerWidth < 768;
+  var mobile = window.innerWidth < 900;
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: !mobile, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.4 : 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.15 : 1.5));
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   renderer.setClearColor(0x050910, 1);
 
   var scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x050910, 0.085);
+  scene.fog = new THREE.FogExp2(0x050910, 0.1);
 
   var camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 40);
   camera.position.set(0, 0, 4.4);
@@ -195,30 +195,27 @@
   var group = new THREE.Group();
   scene.add(group);
 
-  var segs = mobile ? [36, 80] : [72, 140];
+  var segs = mobile ? [22, 46] : [40, 80];
   var torus = new THREE.LineSegments(
     new THREE.WireframeGeometry(new THREE.TorusGeometry(1.12, 0.4, segs[0], segs[1])),
-    new THREE.LineBasicMaterial({ color: 0x9ec4e8, transparent: true, opacity: 0.62 })
+    new THREE.LineBasicMaterial({ color: 0x9ec4e8, transparent: true, opacity: 0.58 })
   );
   group.add(torus);
 
-  var accent = new THREE.LineSegments(
-    new THREE.WireframeGeometry(new THREE.TorusGeometry(1.12, 0.4, 18, 48)),
-    new THREE.LineBasicMaterial({ color: 0xe8611a, transparent: true, opacity: 0.16 })
-  );
-  group.add(accent);
-
+  var side = mobile ? 0.38 : 1.02;
+  var scale = mobile ? 0.3 : 0.54;
+  var lift = mobile ? 0.55 : 0.06;
   var poses = [
-    { x: 0.05, y: 0.08, z: 0, rx: 0.72, ry: 0.18, rz: 0.08, s: 1.18, camZ: 4.15 },
-    { x: 0.85, y: 0.05, z: 0, rx: 0.35, ry: 0.85, rz: 0.05, s: 0.92, camZ: 4.55 },
-    { x: 0, y: 0, z: -0.2, rx: 1.45, ry: 0.05, rz: 0, s: 2.15, camZ: 2.35 },
-    { x: -1.25, y: 0.05, z: 0, rx: 0.25, ry: -0.7, rz: 0.15, s: 1.02, camZ: 4.4 },
-    { x: 0, y: -0.05, z: 0, rx: 1.15, ry: 0.4, rz: 0.1, s: 1.55, camZ: 3.4 },
-    { x: 1.15, y: 0.12, z: 0, rx: 0.4, ry: 0.55, rz: 0, s: 0.95, camZ: 4.5 },
-    { x: 0.1, y: 0.2, z: 0, rx: 0.55, ry: 0.2, rz: 0.2, s: 1.35, camZ: 3.9 },
-    { x: -1.05, y: 0, z: 0, rx: 0.3, ry: -0.45, rz: 0, s: 0.88, camZ: 4.7 },
-    { x: 1.05, y: -0.1, z: 0, rx: 0.2, ry: 0.9, rz: 0.1, s: 1.05, camZ: 4.35 },
-    { x: 0, y: -0.85, z: 0, rx: -0.55, ry: 0.1, rz: 0, s: 2.35, camZ: 3.15 }
+    { x: side, y: lift, z: 0, rx: 0.72, ry: 0.18, rz: 0.08, s: scale, camZ: 4.4 },
+    { x: -side, y: lift, z: 0, rx: 0.35, ry: 0.85, rz: 0.05, s: scale, camZ: 4.5 },
+    { x: side, y: lift, z: 0, rx: 1.15, ry: 0.25, rz: 0.1, s: scale, camZ: 4.35 },
+    { x: -side, y: lift, z: 0, rx: 0.25, ry: -0.7, rz: 0.15, s: scale, camZ: 4.4 },
+    { x: side, y: lift, z: 0, rx: 1.05, ry: 0.4, rz: 0.1, s: scale, camZ: 4.3 },
+    { x: -side, y: lift, z: 0, rx: 0.4, ry: 0.55, rz: 0, s: scale, camZ: 4.5 },
+    { x: side, y: lift, z: 0, rx: 0.55, ry: 0.2, rz: 0.2, s: scale, camZ: 4.4 },
+    { x: -side, y: lift, z: 0, rx: 0.3, ry: -0.45, rz: 0, s: scale, camZ: 4.5 },
+    { x: side, y: lift, z: 0, rx: 0.2, ry: 0.9, rz: 0.1, s: scale, camZ: 4.35 },
+    { x: -side, y: lift, z: 0, rx: -0.35, ry: 0.15, rz: 0, s: scale, camZ: 4.4 }
   ];
 
   function lerp(a, b, t) { return a + (b - a) * t; }
@@ -230,14 +227,24 @@
     var t = clamped - i;
     var a = poses[i];
     var b = poses[Math.min(max, i + 1)];
+    var hop = Math.sin(t * Math.PI);
+    var loop = Math.sin(t * Math.PI * 2);
+    var flip = a.x * b.x < 0 ? 1 : 0.28;
+    var x = lerp(a.x, b.x, t) * (1 - 0.22 * hop * flip);
+    var y = lerp(a.y, b.y, t) + hop * (mobile ? 0.22 : 0.42) * (flip ? 1 : 0.35);
+    var z = lerp(a.z, b.z, t) + loop * 0.38 * flip;
+    if (x > side) x = side;
+    if (x < -side) x = -side;
+    if (y > 0.85) y = 0.85;
+    if (y < -0.35) y = -0.35;
     return {
-      x: lerp(a.x, b.x, t),
-      y: lerp(a.y, b.y, t),
-      z: lerp(a.z, b.z, t),
-      rx: lerp(a.rx, b.rx, t),
-      ry: lerp(a.ry, b.ry, t),
-      rz: lerp(a.rz, b.rz, t),
-      s: lerp(a.s, b.s, t),
+      x: x,
+      y: y,
+      z: z,
+      rx: lerp(a.rx, b.rx, t) + hop * Math.PI * flip,
+      ry: lerp(a.ry, b.ry, t) + t * Math.PI * 1.35 * flip,
+      rz: lerp(a.rz, b.rz, t) + loop * 0.9 * flip,
+      s: lerp(a.s, b.s, t) * (1 + hop * 0.16),
       camZ: lerp(a.camZ, b.camZ, t)
     };
   }
@@ -251,13 +258,25 @@
   }
   window.addEventListener('resize', onResize);
 
+  var running = true;
+  document.addEventListener('visibilitychange', function () {
+    running = document.visibilityState === 'visible';
+    if (running) requestAnimationFrame(tick);
+  });
+
   function tick() {
+    if (!running) return;
     var pose = poseAt(progress);
-    group.position.set(pose.x, pose.y, pose.z);
-    group.scale.setScalar(pose.s);
-    group.rotation.x = pose.rx;
-    group.rotation.y = pose.ry + performance.now() * 0.00012;
-    group.rotation.z = pose.rz;
+    var time = performance.now() * 0.001;
+    group.position.set(
+      pose.x + Math.sin(time * 0.75) * 0.1,
+      pose.y + Math.sin(time * 1.15) * 0.07 + Math.sin(time * 2.4) * 0.03,
+      pose.z + Math.cos(time * 0.9) * 0.08
+    );
+    group.scale.setScalar(pose.s * (1 + Math.sin(time * 1.35) * 0.05));
+    group.rotation.x = pose.rx + Math.sin(time * 0.5) * 0.28;
+    group.rotation.y = pose.ry + time * 0.32;
+    group.rotation.z = pose.rz + Math.sin(time * 0.85) * 0.22;
     camera.position.z = pose.camZ;
     renderer.render(scene, camera);
     requestAnimationFrame(tick);
