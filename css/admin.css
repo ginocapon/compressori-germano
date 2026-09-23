@@ -751,6 +751,144 @@ p { margin-bottom: 1rem; }
   display: block;
 }
 
+/* ============ OFFERTE PUZZLE ============ */
+.off-thumb,
+.off-pick-ph {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--grigio-100);
+  display: inline-block;
+  vertical-align: middle;
+}
+.off-composer { margin-top: 8px; }
+.off-meta { margin-bottom: 16px; }
+.off-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 16px;
+}
+.off-totals-inline {
+  margin-left: auto;
+  font-weight: 700;
+  color: var(--blu-scuro);
+  font-size: 0.9rem;
+}
+.off-puzzle { display: flex; flex-direction: column; gap: 12px; }
+.off-empty, .off-muted { color: var(--grigio-500); font-size: 0.9rem; }
+.off-block {
+  background: var(--bianco);
+  border: 1px solid var(--grigio-200);
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.off-block header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.off-chip {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--blu-scuro);
+  color: var(--bianco);
+  padding: 3px 8px;
+  border-radius: 99px;
+  font-weight: 700;
+}
+.off-block-testo .off-chip { background: var(--blu-chiaro); }
+.off-block-foto .off-chip { background: var(--arancione); }
+.off-block-tools { margin-left: auto; display: flex; gap: 4px; }
+.off-block-tools button {
+  border: 1px solid var(--grigio-200);
+  background: var(--grigio-50);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.off-block-tools button:disabled { opacity: 0.4; cursor: default; }
+.off-block input,
+.off-block textarea {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--grigio-200);
+  border-radius: 6px;
+  font: inherit;
+}
+.off-block img { max-width: 280px; display: block; margin: 8px 0; border-radius: 6px; }
+.off-art-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 8px;
+}
+.off-art-grid label { font-size: 0.75rem; color: var(--grigio-500); }
+.off-art-tot { font-weight: 700; padding-bottom: 10px; color: var(--blu-scuro); }
+.off-insert { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.off-insert button {
+  border: 1px dashed var(--grigio-300);
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.off-file { font-size: 0.8rem; color: var(--grigio-500); }
+.off-picker {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 29, 50, 0.45);
+  z-index: 80;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 8vh 16px;
+}
+.off-picker[hidden] { display: none; }
+.off-picker-card {
+  background: var(--bianco);
+  width: min(720px, 100%);
+  max-height: 80vh;
+  overflow: auto;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-xl);
+}
+.off-picker-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.off-picker-card input[type="search"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--grigio-200);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font: inherit;
+}
+.off-pick-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--grigio-100);
+  background: none;
+  padding: 10px 4px;
+  cursor: pointer;
+  align-items: center;
+}
+.off-pick-row:hover { background: var(--grigio-50); }
+.off-pick-row img, .off-pick-row .off-pick-ph { width: 44px; height: 44px; }
+.off-pick-row span { display: flex; flex-direction: column; gap: 2px; }
+.off-pick-row small { color: var(--grigio-500); }
+
 /* ============ RESPONSIVE ============ */
 
 .mag-pager {
@@ -760,6 +898,8 @@ p { margin-bottom: 1rem; }
   justify-content: center;
   margin-top: 16px;
 }
+
+@media (max-width: 1100px) {
   .admin-form-grid {
     grid-template-columns: 1fr;
   }
@@ -808,6 +948,9 @@ p { margin-bottom: 1rem; }
   }
   .admin-card {
     padding: 16px;
+  }
+  .off-art-grid {
+    grid-template-columns: 1fr 1fr;
   }
   /* Tables scroll horizontally on mobile */
   .admin-table {

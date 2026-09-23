@@ -1,2 +1,9 @@
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /admin.html
+Disallow: /js/admin.js
+Disallow: /js/magazzino.js
+Disallow: /js/catalogo-db.js
+Disallow: /js/preventivo-admin.js
+
+Sitemap: https://ginocapon.github.io/compressori-germano/sitemap.xml

@@ -105,7 +105,16 @@
       if (replaceAll) store.clear();
       list.forEach(function (item) {
         if (!item.codice) return;
-        store.put(normalizeArticolo(item));
+        var n = normalizeArticolo(item);
+        if (!replaceAll && !n.foto) {
+          var req = store.get(n.codice);
+          req.onsuccess = function () {
+            if (req.result && req.result.foto) n.foto = req.result.foto;
+            store.put(n);
+          };
+        } else {
+          store.put(n);
+        }
       });
       return txDone(tx).then(function () {
         cacheArticoli = null;
@@ -152,6 +161,7 @@
       giacenza: Math.round(parseNumber(raw.giacenza || raw.stock || raw.disponibilita || 0)),
       unita: String(raw.unita || raw.um || 'pz').trim() || 'pz',
       descrizione: String(raw.descrizione || raw.description || '').trim(),
+      foto: String(raw.foto || '').trim(),
       attivo: raw.attivo === false || raw.stato === 'Disattivato' ? false : true
     };
   }
@@ -309,8 +319,24 @@
     return Math.round(lordo * (1 - sconto / 100) * 100) / 100;
   }
 
+  function blocchiToRighe(blocchi) {
+    return (blocchi || []).filter(function (b) { return b.type === 'articolo'; }).map(function (b) {
+      return {
+        codice: b.codice || '',
+        nome: b.nome || '',
+        qty: b.qty,
+        prezzo: b.prezzo,
+        sconto: b.sconto,
+        unita: b.unita
+      };
+    });
+  }
+
   function calcolaPreventivo(prev) {
-    var righe = (prev.righe || []).map(function (r) {
+    var src = (prev.blocchi && prev.blocchi.length)
+      ? blocchiToRighe(prev.blocchi)
+      : (prev.righe || []);
+    var righe = src.map(function (r) {
       var copy = Object.assign({}, r);
       copy.totale = lineTotale(copy);
       return copy;
@@ -392,6 +418,38 @@
     return (parseNumber(n)).toLocaleString('it-IT', { style: 'currency', currency: 'EUR' });
   }
 
+  function uid() {
+    return 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  function compressImage(file, maxW, quality) {
+    return new Promise(function (resolve, reject) {
+      if (!file) return resolve('');
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function () {
+        var w = img.width;
+        var h = img.height;
+        var max = maxW || 900;
+        if (w > max) {
+          h = Math.round(h * max / w);
+          w = max;
+        }
+        var c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL('image/jpeg', quality || 0.72));
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error('immagine non valida'));
+      };
+      img.src = url;
+    });
+  }
+
   function downloadText(filename, text, mime) {
     var blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
     var a = document.createElement('a');
@@ -420,6 +478,9 @@
     deletePreventivo: deletePreventivo,
     nextNumero: nextNumero,
     calcolaPreventivo: calcolaPreventivo,
+    blocchiToRighe: blocchiToRighe,
+    uid: uid,
+    compressImage: compressImage,
     lineTotale: lineTotale,
     parseNumber: parseNumber,
     euro: euro,

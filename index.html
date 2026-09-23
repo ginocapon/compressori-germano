@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="robots" content="index, follow">
   <title>Crono Service — Compressori Industriali a Padova</title>
-  <meta name="description" content="Crono Service — compressori d'aria, assistenza e impianti. Più aria per un mondo migliore. Demo interna.">
+  <meta name="description" content="Crono Service: impianti aria compressa, compressori AeroKraft, tubazioni Crono Pipe, assistenza e usato ricondizionato a Padova. Demo con dati fittizi.">
   <meta name="keywords" content="compressori industriali, aria compressa, manutenzione compressori, noleggio compressori, impianti aria compressa, compressori a vite, oil-free">
-  <link rel="canonical" href="https://www.cronoservice.demo/">
+  <link rel="canonical" href="https://ginocapon.github.io/compressori-germano/">
   <!-- Open Graph -->
   <meta property="og:title" content="Crono Service — Più aria per un mondo migliore">
   <meta property="og:description" content="Crono Service: compressori d'aria, assistenza e impianti. Più aria per un mondo migliore.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.cronoservice.demo/">
+  <meta property="og:url" content="https://ginocapon.github.io/compressori-germano/">
   <meta property="og:image" content="image/hero-crono-service.jpg">
   <!-- Preload hero image (LCP) -->
   <link rel="preload" as="image" href="image/hero-crono-service.webp" type="image/webp">
@@ -33,7 +33,7 @@
     "@type": "LocalBusiness",
     "name": "Crono Service",
     "description": "Vendita, manutenzione, noleggio e progettazione impianti di compressori industriali e aria compressa. Oltre 50 anni di esperienza.",
-    "url": "https://www.cronoservice.demo",
+    "url": "https://ginocapon.github.io/compressori-germano",
     "telephone": "+39-049-000-1111",
     "email": "info@cronoservice.demo",
     "address": {
@@ -121,7 +121,7 @@
   }
   </script>
 </head>
-<body>
+<body class="fp-home" data-root="">
 
   <!-- ======== NAVBAR ======== -->
   <nav class="navbar" id="navbar">
@@ -130,23 +130,38 @@
         <div class="logo-icon">CS</div>
         <div class="logo-text">Crono <span>Service</span></div>
       </a>
-      <div class="nav-links" id="navLinks">
-        <a href="index.html" class="active">Home</a>
-        <a href="servizi.html">Servizi</a>
-        <a href="prodotti.html">Compressori</a>
-        <a href="chi-siamo.html">Chi Siamo</a>
+            <div class="nav-links" id="navLinks">
+        <div class="nav-drop">
+          <a href="servizi.html">Servizi <i class="fas fa-chevron-down"></i></a>
+          <div class="nav-drop-menu">
+            <span class="drop-label">Soluzioni</span>
+            <a href="servizi.html">Tutti i servizi</a>
+            <a href="servizi/impianti-aria-compressa.html">Impianti aria compressa</a><a href="servizi/analisi-energetiche.html">Analisi energetiche</a><a href="servizi/qualita-aria-compressa.html">Qualità aria compressa</a><a href="servizi/gestione-burocratica.html">Gestione burocratica</a><a href="servizi/manutenzione-impianti.html">Manutenzione impianti</a><a href="servizi/ricerca-perdite.html">Ricerca perdite</a><a href="servizi/verifica-serbatoi.html">Verifiche serbatoi</a><a href="servizi/noleggio-locali-compressori.html">Noleggio locali compressori</a><a href="servizi/formazione-aziendale.html">Formazione aziendale</a>
+          </div>
+        </div>
+        <div class="nav-drop">
+          <a href="prodotti.html">Prodotti <i class="fas fa-chevron-down"></i></a>
+          <div class="nav-drop-menu">
+            <span class="drop-label">Catalogo</span>
+            <a href="prodotti.html">Catalogo compressori</a><a href="prodotti/pompe-vuoto.html">Pompe per vuoto</a><a href="prodotti/soffianti.html">Soffianti industriali</a><a href="prodotti/motocompressori.html">Motocompressori</a><a href="prodotti/accessori.html">Accessori</a><a href="prodotti/trattamento-aria.html">Trattamento aria</a><a href="prodotti/tubazioni.html">Tubazioni Crono Pipe</a><a href="prodotti/refrigerazione.html">Refrigerazione industriale</a><a href="prodotti/gruppi-elettrogeni.html">Gruppi elettrogeni</a><a href="prodotti/generatori-azoto-idrogeno.html">Generatori azoto e idrogeno</a>
+          </div>
+        </div>
+        <a href="assistenza.html">Assistenza</a>
+        <a href="usato.html">Usato</a>
         <a href="blog.html">Blog</a>
-        <a href="contatti.html">Contatti</a>
-        <a href="contatti.html" class="nav-cta">Preventivo Gratuito</a>
+        <a href="contatti.html" class="nav-cta">Preventivo</a>
       </div>
-      <div class="nav-toggle" id="navToggle">
+<div class="nav-toggle" id="navToggle">
         <span></span><span></span><span></span>
       </div>
     </div>
   </nav>
 
+  <canvas id="fpScene" class="fp-scene" aria-hidden="true"></canvas>
+  <div class="fp-deck" id="fpDeck">
+
   <!-- ======== HERO ======== -->
-  <section class="hero">
+  <section class="hero fp-page" data-fp-label="Home">
     <div class="hero-bg">
       <picture>
         <source srcset="image/hero-crono-service.webp" type="image/webp">
@@ -166,8 +181,8 @@
         <a href="contatti.html" class="btn btn-primary btn-lg">
           <i class="fas fa-paper-plane"></i> Richiedi Preventivo
         </a>
-        <a href="prodotti.html#catalogo-magazzino" class="btn btn-secondary btn-lg">
-          <i class="fas fa-th-large"></i> Catalogo Compressori
+        <a href="prodotti.html" class="btn btn-secondary btn-lg">
+          <i class="fas fa-th-large"></i> Famiglie di prodotto
         </a>
       </div>
       <div class="hero-stats">
@@ -188,7 +203,7 @@
   </section>
 
   <!-- ======== SERVIZI ======== -->
-  <section class="section section-gray" id="servizi">
+  <section class="section section-gray fp-page" id="servizi" data-fp-label="Servizi">
     <div class="container">
       <div class="section-header reveal">
         <span class="overline">I Nostri Servizi</span>
@@ -200,44 +215,62 @@
           <div class="service-icon"><i class="fas fa-shopping-cart"></i></div>
           <h3>Vendita Compressori</h3>
           <p>Compressori a vite, pistoni e centrifughi dei migliori marchi internazionali. Lubrificati e oil-free per ogni applicazione industriale.</p>
-          <a href="servizi.html#vendita" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
+          <a href="prodotti.html" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="service-card reveal">
           <div class="service-icon"><i class="fas fa-wrench"></i></div>
           <h3>Manutenzione e Assistenza</h3>
           <p>Manutenzione programmata e straordinaria con ricambi originali. Contratti di assistenza fino a 5 anni con tempi di intervento garantiti.</p>
-          <a href="servizi.html#manutenzione" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
+          <a href="servizi/manutenzione-impianti.html" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="service-card reveal">
           <div class="service-icon"><i class="fas fa-calendar-alt"></i></div>
           <h3>Noleggio</h3>
           <p>Noleggio compressori e generatori a breve e lungo termine. Ideale per emergenze, fermi programmati o picchi di produzione.</p>
-          <a href="servizi.html#noleggio" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
+          <a href="servizi/noleggio-locali-compressori.html" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="service-card reveal">
           <div class="service-icon"><i class="fas fa-drafting-compass"></i></div>
           <h3>Progettazione Impianti</h3>
           <p>Progettazione e realizzazione di impianti aria compressa chiavi in mano. Dalla sala compressori alla rete di distribuzione.</p>
-          <a href="servizi.html#progettazione" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
+          <a href="servizi/impianti-aria-compressa.html" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="service-card reveal">
           <div class="service-icon"><i class="fas fa-bolt"></i></div>
           <h3>Diagnosi Energetica</h3>
           <p>Analisi Crono Scan per monitorare consumi, individuare sprechi e perdite. Risparmio energetico medio del 25-35% sulla bolletta annuale.</p>
-          <a href="servizi.html#diagnosi" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
+          <a href="servizi/analisi-energetiche.html" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
         </div>
         <div class="service-card reveal">
           <div class="service-icon"><i class="fas fa-box-open"></i></div>
           <h3>Ricambi Originali</h3>
           <p>Magazzino ricambi originali per tutte le marche. Consegna rapida e assistenza tecnica per la sostituzione di ogni componente.</p>
-          <a href="servizi.html#ricambi" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
+          <a href="assistenza.html" class="service-link">Scopri di più <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon"><i class="fas fa-search"></i></div>
+          <h3>Ricerca perdite</h3>
+          <p>Crono LeakFind a ultrasuoni: mappa euro/anno e chiusura perdite a impianto acceso.</p>
+          <a href="servizi/ricerca-perdite.html" class="service-link">Scopri di piu <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon"><i class="fas fa-warehouse"></i></div>
+          <h3>Noleggio sale</h3>
+          <p>Locali compressori plug-and-play Crono Box per emergenze e ampliamenti temporanei.</p>
+          <a href="servizi/noleggio-locali-compressori.html" class="service-link">Scopri di piu <i class="fas fa-arrow-right"></i></a>
+        </div>
+        <div class="service-card reveal">
+          <div class="service-icon"><i class="fas fa-recycle"></i></div>
+          <h3>Usato ricondizionato</h3>
+          <p>Serie CS AeroKraft e Flowline collaudate, con ore vere e garanzia 12 mesi.</p>
+          <a href="usato.html" class="service-link">Scopri di piu <i class="fas fa-arrow-right"></i></a>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ======== PRODOTTI PREVIEW ======== -->
-  <section class="section" id="prodotti">
+  <section class="section fp-page" id="prodotti" data-fp-label="Prodotti">
     <div class="container">
       <div class="section-header reveal">
         <span class="overline">I Nostri Prodotti</span>
@@ -299,15 +332,41 @@
             <a href="prodotti.html#generatori" class="btn btn-outline">Dettagli</a>
           </div>
         </div>
+        <div class="product-card reveal">
+          <img src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&h=220&fit=crop" alt="Tubazioni Crono Pipe in alluminio" class="product-card-img" width="400" height="220" loading="lazy" decoding="async">
+          <div class="product-card-body">
+            <div class="product-card-category">Distribuzione</div>
+            <h3>Crono Pipe alluminio e inox</h3>
+            <p>Rete a innesto, interno liscio, diametri 20-80 mm. Zero ruggine in linea.</p>
+            <div class="product-specs">
+              <span class="product-spec">ALU 6082</span>
+              <span class="product-spec">AISI 316L</span>
+            </div>
+            <a href="prodotti/tubazioni.html" class="btn btn-outline">Dettagli</a>
+          </div>
+        </div>
+        <div class="product-card reveal">
+          <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&h=220&fit=crop" alt="Pompa per vuoto VitaVac" class="product-card-img" width="400" height="220" loading="lazy" decoding="async">
+          <div class="product-card-body">
+            <div class="product-card-category">Vuoto</div>
+            <h3>Pompe VitaVac</h3>
+            <p>Palette, vite a secco e canale laterale per imballo, handling e processo.</p>
+            <div class="product-specs">
+              <span class="product-spec">16-1200 m3/h</span>
+              <span class="product-spec">fino a 0,1 mbar</span>
+            </div>
+            <a href="prodotti/pompe-vuoto.html" class="btn btn-outline">Dettagli</a>
+          </div>
+        </div>
       </div>
       <div style="text-align:center; margin-top:40px;">
-        <a href="prodotti.html" class="btn btn-dark"><i class="fas fa-th-large"></i> Vedi i Compressori</a>
+        <a href="prodotti.html" class="btn btn-dark"><i class="fas fa-th-large"></i> Vedi i prodotti</a>
       </div>
     </div>
   </section>
 
   <!-- ======== CHI SIAMO PREVIEW ======== -->
-  <section class="section section-gray" id="chi-siamo">
+  <section class="section section-gray fp-page" id="chi-siamo" data-fp-label="Azienda">
     <div class="container">
       <div class="about-grid reveal">
         <div class="about-image">
@@ -361,7 +420,7 @@
   </section>
 
   <!-- ======== NUMERI / COUNTER ======== -->
-  <section class="section section-dark">
+  <section class="section section-dark fp-page" id="numeri" data-fp-label="Numeri">
     <div class="container">
       <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:30px; text-align:center;" class="reveal">
         <div>
@@ -385,7 +444,7 @@
   </section>
 
   <!-- ======== TESTIMONIALS ======== -->
-  <section class="section section-dark" style="padding-top:0;">
+  <section class="section section-dark fp-page" id="clienti" data-fp-label="Clienti">
     <div class="container">
       <div class="section-header reveal">
         <span class="overline">Testimonianze</span>
@@ -431,7 +490,7 @@
   </section>
 
   <!-- ======== CTA BANNER ======== -->
-  <section class="cta-banner">
+  <section class="cta-banner fp-page" data-fp-label="Contatto">
     <div class="container reveal">
       <h2>Hai Bisogno di un Compressore?</h2>
       <p>Contattaci per un preventivo gratuito e personalizzato. Il nostro team tecnico ti guiderà nella scelta della soluzione migliore per la tua azienda.</p>
@@ -440,7 +499,7 @@
   </section>
 
   <!-- ======== BLOG PREVIEW ======== -->
-  <section class="section" id="blog">
+  <section class="section fp-page" id="blog" data-fp-label="Blog">
     <div class="container">
       <div class="section-header reveal">
         <span class="overline">Blog Tecnico</span>
@@ -492,7 +551,7 @@
   </section>
 
   <!-- ======== FAQ ======== -->
-  <section class="section section-gray" id="faq">
+  <section class="section section-gray fp-page" id="faq" data-fp-label="FAQ">
     <div class="container">
       <div class="section-header reveal">
         <span class="overline">FAQ</span>
@@ -549,7 +608,7 @@
   </section>
 
   <!-- ======== FOOTER ======== -->
-  <footer class="footer">
+  <footer class="footer fp-page" data-fp-label="Info">
     <div class="container">
       <div class="footer-grid">
         <div class="footer-brand">
@@ -565,19 +624,19 @@
         <div class="footer-col">
           <h4>Servizi</h4>
           <ul>
-            <li><a href="servizi.html#vendita">Vendita Compressori</a></li>
-            <li><a href="servizi.html#manutenzione">Manutenzione</a></li>
-            <li><a href="servizi.html#noleggio">Noleggio</a></li>
-            <li><a href="servizi.html#progettazione">Progettazione Impianti</a></li>
-            <li><a href="servizi.html#diagnosi">Diagnosi Energetica</a></li>
-            <li><a href="servizi.html#ricambi">Ricambi Originali</a></li>
+            <li><a href="servizi/impianti-aria-compressa.html">Impianti</a></li>
+            <li><a href="servizi/analisi-energetiche.html">Analisi energetiche</a></li>
+            <li><a href="servizi/manutenzione-impianti.html">Manutenzione</a></li>
+            <li><a href="assistenza.html">Assistenza</a></li>
+            <li><a href="usato.html">Usato ricondizionato</a></li>
+            <li><a href="prodotti/tubazioni.html">Crono Pipe</a></li>
           </ul>
         </div>
         <div class="footer-col">
           <h4>Azienda</h4>
           <ul>
             <li><a href="chi-siamo.html">Chi Siamo</a></li>
-            <li><a href="prodotti.html">Compressori</a></li>
+            <li><a href="prodotti.html">Prodotti</a></li>
             <li><a href="blog.html">Blog Tecnico</a></li>
             <li><a href="contatti.html">Contatti</a></li>
             <li><a href="admin.html">Area Riservata</a></li>
@@ -611,6 +670,9 @@
       </div>
     </div>
   </footer>
+  </div>
+
+  <nav class="fp-dots" id="fpDots" aria-label="Scorri le sezioni"></nav>
 
   <!-- ======== MOBILE STICKY CTA BAR ======== -->
   <div class="mobile-cta-bar" id="mobileCta">
@@ -655,6 +717,8 @@
   </div>
 
   <!-- ======== SCRIPTS ======== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="js/page-scroll.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -219,8 +219,8 @@
           </div>
         </div>
         <p style="margin:0 0 16px; color:var(--grigio-500); font-size:0.9rem;">
-          Carica migliaia di articoli (compressori, viti, pompe, tubi, filtri, ricambi). Colonne CSV: <code>codice;nome;categoria;prezzo;giacenza;unita;descrizione</code>.
-          Gli articoli appaiono in <a href="prodotti.html">Compressori</a> e si cliccano per creare il preventivo.
+          Magazzino interno: CSV o inserimento a mano, con foto opzionale. I prezzi restano qui, mai sul sito pubblico.
+          Colonne CSV: <code>codice;nome;categoria;prezzo;giacenza;unita;descrizione</code>.
           <span id="magInfo" style="font-weight:600; color:var(--blu-scuro);"></span>
         </p>
         <div class="admin-card admin-form-panel" id="magFormPanel" style="display:none;">
@@ -238,6 +238,13 @@
               <div class="form-group"><label>Unità</label><input type="text" id="magUnita" value="pz"></div>
             </div>
             <div class="form-group"><label>Descrizione</label><textarea id="magDescrizione" rows="2"></textarea></div>
+            <div class="form-group">
+              <label>Foto articolo (solo admin)</label>
+              <input type="file" id="magFotoFile" accept="image/*">
+              <input type="hidden" id="magFoto">
+              <img id="magFotoPreview" alt="" class="off-thumb" hidden>
+              <button type="button" class="btn btn-outline" style="margin-top:8px;" onclick="clearMagFoto()">Rimuovi foto</button>
+            </div>
             <div style="display:flex; gap:12px; justify-content:flex-end;">
               <button type="button" class="btn btn-outline" onclick="closeMagForm()">Annulla</button>
               <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salva</button>
@@ -247,7 +254,7 @@
         <div class="admin-card">
           <div class="admin-table-wrap">
             <table class="admin-table">
-              <thead><tr><th>Codice</th><th>Articolo</th><th>Categoria</th><th>Prezzo</th><th>Giacenza</th><th>Azioni</th></tr></thead>
+              <thead><tr><th></th><th>Codice</th><th>Articolo</th><th>Categoria</th><th>Prezzo</th><th>Giacenza</th><th>Azioni</th></tr></thead>
               <tbody id="magTable"></tbody>
             </table>
           </div>
@@ -258,18 +265,70 @@
 
       <!-- ======================== PREVENTIVI ======================== -->
       <div class="admin-section" id="section-preventivi">
-        <div class="admin-topbar">
-          <h2>Preventivi salvati</h2>
-          <a class="btn btn-primary" href="prodotti.html"><i class="fas fa-plus"></i> Nuovo preventivo</a>
+        <div class="admin-topbar" id="prevListBar">
+          <h2>Offerte interne</h2>
+          <button class="btn btn-primary" type="button" onclick="nuovaOfferta()"><i class="fas fa-plus"></i> Nuova offerta</button>
         </div>
-        <div class="admin-card">
+        <p id="prevHint" style="margin:0 0 16px; color:var(--grigio-500); font-size:0.9rem;">
+          Solo uso interno. Componi titolo, data, testo, articoli dal magazzino e blocchi foto/testo sopra o sotto ogni voce. Il cliente non vede listini.
+        </p>
+        <div class="admin-card" id="prevListCard">
           <div class="admin-table-wrap">
             <table class="admin-table">
-              <thead><tr><th>Numero</th><th>Cliente</th><th>Data</th><th>Righe</th><th>Totale</th><th>Azioni</th></tr></thead>
+              <thead><tr><th>Numero</th><th>Titolo</th><th>Cliente</th><th>Data</th><th>Blocchi</th><th>Totale</th><th>Azioni</th></tr></thead>
               <tbody id="prevTable"></tbody>
             </table>
           </div>
-          <div class="admin-empty" id="prevEmpty" style="display:none;"><i class="fas fa-file-invoice"></i><p>Nessun preventivo salvato. Crealo dalla pagina Compressori cliccando gli articoli.</p></div>
+          <div class="admin-empty" id="prevEmpty" style="display:none;"><i class="fas fa-file-invoice"></i><p>Nessuna offerta. Creala da qui: magazzino + testi + foto, poi stampa o PDF.</p></div>
+        </div>
+
+        <div id="offComposer" class="off-composer" hidden>
+          <div class="admin-topbar">
+            <h2 id="offHeading">Nuova offerta</h2>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-outline" type="button" onclick="chiudiOfferta()">Elenco</button>
+              <button class="btn btn-outline" type="button" onclick="salvaOfferta()"><i class="fas fa-save"></i> Salva</button>
+              <button class="btn btn-primary" type="button" onclick="stampaOfferta()"><i class="fas fa-print"></i> Stampa / PDF</button>
+            </div>
+          </div>
+          <div class="admin-card off-meta">
+            <div class="admin-form-grid">
+              <div class="form-group"><label>Titolo offerta</label><input type="text" id="offTitolo" placeholder="es. Sala compressori Demo Metal — revamping CS 75"></div>
+              <div class="form-group"><label>Data</label><input type="date" id="offData"></div>
+              <div class="form-group"><label>Cliente CRM</label>
+                <select id="offCliente"><option value="">— Seleziona dal CRM —</option></select>
+              </div>
+              <div class="form-group"><label>Azienda</label><input type="text" id="offAzienda" placeholder="Ragione sociale"></div>
+              <div class="form-group"><label>Referente</label><input type="text" id="offNome" placeholder="Nome contatto"></div>
+              <div class="form-group"><label>P.IVA</label><input type="text" id="offPiva"></div>
+              <div class="form-group"><label>Email</label><input type="email" id="offEmail"></div>
+              <div class="form-group"><label>Indirizzo</label><input type="text" id="offIndirizzo"></div>
+              <div class="form-group"><label>Sconto globale %</label><input type="number" id="offSconto" min="0" max="100" step="0.5" value="0"></div>
+              <div class="form-group"><label>IVA %</label><input type="number" id="offIva" min="0" max="22" step="1" value="22"></div>
+            </div>
+            <div class="form-group"><label>Spiegazione dell'offerta</label>
+              <textarea id="offIntro" rows="4" placeholder="Cosa proponiamo, contesto impianto, lavori previsti, tempi, condizioni..."></textarea>
+            </div>
+          </div>
+          <div class="off-toolbar">
+            <button class="btn btn-primary" type="button" onclick="apriPickerArticolo()"><i class="fas fa-warehouse"></i> Articolo magazzino</button>
+            <button class="btn btn-outline" type="button" onclick="aggiungiVoceLibera()"><i class="fas fa-plus"></i> Voce libera</button>
+            <button class="btn btn-outline" type="button" onclick="aggiungiBloccoTesto()"><i class="fas fa-align-left"></i> Testo</button>
+            <button class="btn btn-outline" type="button" onclick="aggiungiBloccoFoto()"><i class="fas fa-image"></i> Foto</button>
+            <span id="offTotals" class="off-totals-inline"></span>
+          </div>
+          <div id="offPuzzle" class="off-puzzle"></div>
+        </div>
+
+        <div class="off-picker" id="artPicker" hidden>
+          <div class="off-picker-card">
+            <div class="off-picker-head">
+              <h3>Aggiungi dal magazzino</h3>
+              <button type="button" class="admin-close-btn" onclick="chiudiPickerArticolo()"><i class="fas fa-times"></i></button>
+            </div>
+            <input type="search" id="artPickerQ" placeholder="Cerca codice o nome...">
+            <div id="artPickerList" class="off-picker-list"></div>
+          </div>
         </div>
       </div>
 
@@ -709,5 +768,6 @@
   <script src="js/catalogo-db.js"></script>
   <script src="js/admin.js"></script>
   <script src="js/magazzino.js"></script>
+  <script src="js/preventivo-admin.js"></script>
 </body>
 </html>

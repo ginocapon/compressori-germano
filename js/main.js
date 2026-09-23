@@ -66,15 +66,24 @@ document.querySelectorAll('.faq-item').forEach(item => {
   });
 });
 
-// Mobile nav toggle
+// Mobile nav toggle + dropdowns
 const navToggle = document.getElementById('navToggle');
 const navLinks = document.getElementById('navLinks');
+const SITE_ROOT = document.body && document.body.dataset.root ? document.body.dataset.root : '';
 if (navToggle && navLinks) {
   navToggle.addEventListener('click', () => {
     navLinks.classList.toggle('open');
   });
-  // Close on link click
+  navLinks.querySelectorAll('.nav-drop > a').forEach(link => {
+    link.addEventListener('click', (e) => {
+      if (window.innerWidth <= 1280) {
+        e.preventDefault();
+        link.parentElement.classList.toggle('open');
+      }
+    });
+  });
   navLinks.querySelectorAll('a').forEach(link => {
+    if (link.parentElement.classList.contains('nav-drop') && link.parentElement.querySelector(':scope > a') === link) return;
     link.addEventListener('click', () => navLinks.classList.remove('open'));
   });
 }
@@ -138,14 +147,16 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 
 // ============ CHATBOT ============
 const chatbotResponses = {
-  'servizi': 'Offriamo: vendita compressori, manutenzione e assistenza 24/7, noleggio a breve/lungo termine, progettazione impianti aria compressa, diagnosi energetica Crono Scan e ricambi originali. Visita la pagina <a href="servizi.html" style="color:var(--arancione);font-weight:600;">Servizi</a> per i dettagli!',
-  'preventivo': 'Per richiedere un preventivo gratuito puoi: chiamarci al <strong>049 000 1111</strong>, scrivere a <strong>info@cronoservice.demo</strong>, oppure compilare il modulo nella pagina <a href="contatti.html" style="color:var(--arancione);font-weight:600;">Contatti</a>. Rispondiamo entro 24 ore!',
-  'oil-free': 'I nostri compressori oil-free garantiscono aria compressa 100% pura (Classe 0 ISO 8573-1), ideali per industria alimentare, farmaceutica ed elettronica. Potenze da 15 a 500 kW. Scopri di più nella pagina <a href="prodotti.html#oilfree" style="color:var(--arancione);font-weight:600;">Prodotti</a>.',
-  'contatti': 'Puoi contattarci in diversi modi:<br><strong>Tel:</strong> 049 000 1111<br><strong>Email:</strong> info@cronoservice.demo<br><strong>Indirizzo:</strong> Via dell\'Industria, 42 — 35100 Padova<br><strong>Orari:</strong> Lun-Ven 8:00-18:00, Sab 8:00-12:00',
-  'manutenzione': 'Offriamo manutenzione ordinaria (ogni 2.000-4.000 ore) e straordinaria con ricambi originali. Contratti fino a 5 anni con tempi di intervento garantiti e assistenza 24/7. <a href="servizi.html#manutenzione" style="color:var(--arancione);font-weight:600;">Maggiori info</a>.',
-  'noleggio': 'Noleggiamo compressori e generatori a breve e lungo termine. Il servizio include trasporto, installazione e assistenza tecnica. Ideale per emergenze o picchi di produzione. <a href="servizi.html#noleggio" style="color:var(--arancione);font-weight:600;">Scopri il noleggio</a>.',
-  'risparmio': 'Con la diagnosi energetica Crono Scan individuiamo sprechi e perdite nel vostro impianto. Il risparmio medio raggiunge il 25-35% sulla bolletta annuale! <a href="servizi.html#diagnosi" style="color:var(--arancione);font-weight:600;">Scopri Crono Scan</a>.',
-  'default': 'Grazie per la tua domanda! Per una risposta dettagliata, ti consiglio di contattarci direttamente al <strong>049 000 1111</strong> o via email a <strong>info@cronoservice.demo</strong>. In alternativa, visita la pagina <a href="contatti.html" style="color:var(--arancione);font-weight:600;">Contatti</a>.'
+  'servizi': 'Offriamo: impianti, analisi energetiche Crono Scan, qualità aria ISO 8573, burocrazia PED, manutenzione Crono Care, ricerca perdite, verifiche serbatoi, noleggio sale compressori e formazione. Visita <a href="' + SITE_ROOT + 'servizi.html" style="color:var(--arancione);font-weight:600;">Servizi</a>.',
+  'preventivo': 'Per un preventivo: <strong>049 000 1111</strong>, <strong>info@cronoservice.demo</strong> o il modulo <a href="' + SITE_ROOT + 'contatti.html" style="color:var(--arancione);font-weight:600;">Contatti</a>. Rispondiamo entro 24 ore.',
+  'oil-free': 'I compressori oil-free AeroKraft garantiscono aria Classe 0 ISO 8573-1. Dettagli in <a href="' + SITE_ROOT + 'prodotti.html#oilfree" style="color:var(--arancione);font-weight:600;">Catalogo</a>.',
+  'contatti': '<strong>Tel:</strong> 049 000 1111<br><strong>Email:</strong> info@cronoservice.demo<br><strong>Indirizzo:</strong> Via dell\'Industria, 42 — 35100 Padova<br><strong>Orari:</strong> Lun-Ven 8:00-18:00, Sab 8:00-12:00',
+  'manutenzione': 'Crono Care: manutenzione ogni 2.000-4.000 ore, ricambi AeroKraft/Flowline, intervento medio 4 ore. <a href="' + SITE_ROOT + 'assistenza.html" style="color:var(--arancione);font-weight:600;">Assistenza</a>.',
+  'noleggio': 'Noleggio macchine e sale compressori complete. <a href="' + SITE_ROOT + 'servizi/noleggio-locali-compressori.html" style="color:var(--arancione);font-weight:600;">Noleggio locali</a>.',
+  'risparmio': 'Crono Scan misura i consumi una settimana senza fermi. Risparmio medio 25-35%. <a href="' + SITE_ROOT + 'servizi/analisi-energetiche.html" style="color:var(--arancione);font-weight:600;">Analisi energetiche</a>.',
+  'usato': 'Parco usato ricondizionato serie CS (AeroKraft) e essiccatori Flowline, con collaudo e garanzia. <a href="' + SITE_ROOT + 'usato.html" style="color:var(--arancione);font-weight:600;">Usato</a>.',
+  'tubazioni': 'Reti Crono Pipe in alluminio e inox: giunti a innesto rapido, bassa perdita di carico. <a href="' + SITE_ROOT + 'prodotti/tubazioni.html" style="color:var(--arancione);font-weight:600;">Tubazioni</a>.',
+  'default': 'Scrivici al <strong>049 000 1111</strong> o <strong>info@cronoservice.demo</strong>. Pagina <a href="' + SITE_ROOT + 'contatti.html" style="color:var(--arancione);font-weight:600;">Contatti</a>.'
 };
 
 function chatbotGetResponse(msg) {
@@ -162,8 +173,12 @@ function chatbotGetResponse(msg) {
     return chatbotResponses['manutenzione'];
   if (lower.includes('noleggi') || lower.includes('affitt'))
     return chatbotResponses['noleggio'];
-  if (lower.includes('risparm') || lower.includes('energe') || lower.includes('consum') || lower.includes('airscan'))
+  if (lower.includes('risparm') || lower.includes('energe') || lower.includes('consum') || lower.includes('airscan') || lower.includes('crono scan'))
     return chatbotResponses['risparmio'];
+  if (lower.includes('usato') || lower.includes('seconda mano') || lower.includes('ricondizion'))
+    return chatbotResponses['usato'];
+  if (lower.includes('tubaz') || lower.includes('allumin') || lower.includes('crono pipe'))
+    return chatbotResponses['tubazioni'];
   return chatbotResponses['default'];
 }
 

@@ -47,7 +47,11 @@
       } else {
         if (empty) empty.style.display = 'none';
         tbody.innerHTML = res.rows.map(function (a) {
+          var thumb = a.foto
+            ? '<img src="' + a.foto + '" alt="" class="off-thumb">'
+            : '<span class="off-pick-ph"></span>';
           return '<tr>' +
+            '<td>' + thumb + '</td>' +
             '<td><code>' + a.codice + '</code></td>' +
             '<td><strong>' + a.nome + '</strong></td>' +
             '<td>' + a.categoria + '</td>' +
@@ -80,6 +84,7 @@
     $('magFormTitle').textContent = 'Nuovo articolo';
     $('magForm').reset();
     $('magCodice').readOnly = false;
+    clearMagFoto();
     $('magFormPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -101,6 +106,7 @@
       $('magGiacenza').value = a.giacenza;
       $('magUnita').value = a.unita;
       $('magDescrizione').value = a.descrizione || '';
+      setMagFoto(a.foto || '');
       $('magFormPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   };
@@ -115,6 +121,7 @@
       giacenza: $('magGiacenza').value,
       unita: $('magUnita').value,
       descrizione: $('magDescrizione').value,
+      foto: ($('magFoto') && $('magFoto').value) || '',
       attivo: true
     };
     C.saveArticolo(item).then(function () {
@@ -167,38 +174,25 @@
     C.downloadText('modello-articoli.csv', sample, 'text/csv;charset=utf-8');
   };
 
-  function renderPreventiviAdmin() {
-    C.loadPreventivi(true).then(function (rows) {
-      var tbody = $('prevTable');
-      var empty = $('prevEmpty');
-      if (!tbody) return;
-      if (!rows.length) {
-        tbody.innerHTML = '';
-        if (empty) empty.style.display = 'block';
-        return;
+  window.setMagFoto = function (data) {
+    var hidden = $('magFoto');
+    var preview = $('magFotoPreview');
+    if (hidden) hidden.value = data || '';
+    if (preview) {
+      if (data) {
+        preview.src = data;
+        preview.hidden = false;
+      } else {
+        preview.removeAttribute('src');
+        preview.hidden = true;
       }
-      if (empty) empty.style.display = 'none';
-      tbody.innerHTML = rows.map(function (p) {
-        return '<tr>' +
-          '<td><strong>' + (p.numero || '—') + '</strong></td>' +
-          '<td>' + (p.clienteAzienda || p.clienteNome || '—') + '</td>' +
-          '<td>' + (p.data || '').slice(0, 10) + '</td>' +
-          '<td>' + (p.righe ? p.righe.length : 0) + ' art.</td>' +
-          '<td>' + C.euro(p.totale) + '</td>' +
-          '<td><div class="admin-actions">' +
-            '<a class="admin-action-btn" href="prodotti.html?preventivo=' + p.id + '" title="Apri"><i class="fas fa-folder-open"></i></a>' +
-            '<button class="admin-action-btn delete" onclick="deletePrevAdmin(' + p.id + ')" title="Elimina"><i class="fas fa-trash"></i></button>' +
-          '</div></td></tr>';
-      }).join('');
-    });
-  }
+    }
+  };
 
-  window.deletePrevAdmin = function (id) {
-    if (!confirm('Eliminare questo preventivo?')) return;
-    C.deletePreventivo(id).then(function () {
-      renderPreventiviAdmin();
-      if (typeof showToast === 'function') showToast('Preventivo eliminato', 'error');
-    });
+  window.clearMagFoto = function () {
+    setMagFoto('');
+    var file = $('magFotoFile');
+    if (file) file.value = '';
   };
 
   function boot() {
@@ -206,7 +200,6 @@
     fillCategorie('magCategoria', false);
     C.ensureSeed().then(function () {
       renderMagazzino();
-      renderPreventiviAdmin();
     });
     var search = $('magSearch');
     var filter = $('magFilter');
@@ -216,6 +209,15 @@
       t = setTimeout(function () { magState.page = 1; renderMagazzino(); }, 120);
     });
     if (filter) filter.addEventListener('change', function () { magState.page = 1; renderMagazzino(); });
+    var fotoFile = $('magFotoFile');
+    if (fotoFile) {
+      fotoFile.addEventListener('change', function () {
+        if (!this.files || !this.files[0]) return;
+        C.compressImage(this.files[0], 900, 0.72).then(function (data) {
+          setMagFoto(data);
+        });
+      });
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
